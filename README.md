@@ -36,7 +36,7 @@ The code in this repository is quite cluttered, and contains a lot of bugs.
 
 ## Acknowledgements
 
-JS Chessboard interface from [cm-chessboard](https://github.com/shaack/cm-chessboard)
+JS Chessboard interface from [cm-chessboard](https://github.com/shaack/cm-chessboard) (MIT License)
 
 Chess opening dataset from [lichess-org](https://github.com/lichess-org/chess-openings)
 
