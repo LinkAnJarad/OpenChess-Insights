@@ -1,0 +1,71 @@
+$darkenCoordinates: 8%;
+
+@mixin cm-chessboard-theme($name,
+$light, $dark,
+$coordinates-light: mix(black, $dark, $darkenCoordinates),
+$coordinates-dark: mix(white, $light, $darkenCoordinates),
+$coordinates-frame:  mix(black, $dark, $darkenCoordinates),
+$border: $dark, $frame-bg: $light) {
+  .cm-chessboard.#{$name} {
+    .board {
+      .square {
+        &.white {
+          fill: $light;
+        }
+
+        &.black {
+          fill: $dark;
+        }
+      }
+    }
+    // border, with borderType "thin"
+    &.border-type-thin {
+      .board {
+        .border {
+          stroke: $border;
+          stroke-width: 0.7%;
+          fill: $dark;
+        }
+      }
+    }
+    &.border-type-none {
+      .board {
+        .border {
+          stroke: $border;
+          stroke-width: 0;
+          fill: $dark;
+        }
+      }
+    }
+    // border, with borderType "frame"
+    &.border-type-frame {
+      .board {
+        .border {
+          fill: $frame-bg;
+          stroke: none;
+        }
+        .border-inner {
+          fill: $dark;
+          stroke: $border;
+          stroke-width: 0.7%;
+        }
+      }
+    }
+    .coordinates {
+      pointer-events: none;
+      user-select: none;
+
+      .coordinate {
+        fill: $coordinates-frame;
+        font-size: 7px;
+        cursor: default;
+        &.black {
+          fill: $coordinates-dark;
+        }
+        &.white {
+          fill: $coordinates-light;
+        }
+      }
+    }
+  }
+}

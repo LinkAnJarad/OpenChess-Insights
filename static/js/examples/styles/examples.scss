@@ -1,0 +1,107 @@
+$link: #516CD4;
+$link-hover: #E2FEDE;
+$background: #222;
+$default: #fff;
+$color2: #CD7338;
+$code-background: #111;
+$code: #eee;
+$font-size: 18px;
+
+body {
+  color: $default;
+  background-color: $background;
+  padding: 20px;
+  margin: 0;
+  font-family: "Helvetica Neue", sans-serif;
+  line-height: 1.3;
+  font-size: $font-size;
+}
+
+a {
+  color: $link;
+
+  &:visited {
+    color: #929292;
+  }
+
+  &:hover {
+    color: $link-hover;
+  }
+}
+
+h1, h1 a {
+  margin-top: 0;
+  font-size: $font-size * 2.2;
+  color: $color2;
+}
+
+h1 {
+  margin-bottom: 10px;
+}
+
+h2 {
+  margin-bottom: 15px;
+  font-size: $font-size * 1.4;
+  color: $color2;
+}
+
+pre {
+  font-family: "courier new", monospace;
+  font-size: 90%;
+  background-color: $code-background;
+  color: $code;
+  padding: 5px;
+  overflow: auto;
+}
+
+div.board {
+  float: left;
+  max-width: 500px;
+  width: calc(100vw - 40px);
+  margin-right: 20px;
+  margin-bottom: 20px;
+  &.board-small {
+    max-width: 320px;
+  }
+  &.board-large {
+    max-width: 680px;
+  }
+}
+
+.clearfix::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+
+button {
+  padding: 5px 20px;
+  font-size: 92%;
+  margin-right: 10px;
+  margin-bottom: 10px;
+  background-color: #999;
+  color: black;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #777;
+  }
+}
+
+input[type=text] {
+  font-size: 92%;
+  padding: 5px;
+  border-radius: 3px;
+  border: none;
+}
+
+li {
+  padding: 0.05rem;
+
+}
+
+.board-max-width {
+  max-width: 640px;
+}

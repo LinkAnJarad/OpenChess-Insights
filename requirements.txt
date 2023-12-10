@@ -1,0 +1,4 @@
+ipython==8.16.1
+pandas==2.1.1
+python-chess==1.10.0
+Flask==3.0.0

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>cm-chessboard</title>
+    <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1.0"/>
+    <link rel="stylesheet" href="../styles/examples.css"/>
+    <link rel="stylesheet" href="../../assets/chessboard.css"/>
+    <link rel="stylesheet" href="../../assets/extensions/markers/markers.css"/>
+    <style>
+        /*noinspection CssUnusedSymbol*/
+        .board .html-layer {
+            background-color: rgba(0, 0, 0, 0.4);
+            cursor: pointer;
+        }
+        .board .html-layer div {
+            position: absolute;
+            top: 30%;
+            left: 1rem;
+            right: 1rem;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 1rem;
+            font-size: 30px;
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<h1><a href="../../">cm-chessboard</a></h1>
+<h2>Example: HtmlLayer Extension</h2>
+<p>Use this extension to add a layer over the board which contains HTML.</p>
+<div class="board" id="board"></div>
+<div>
+    <button onclick="window.addLayer()">Add HTML Layer</button>
+    <button onclick="removeLayer()">Remove HTML Layer</button>
+</div>
+<script type="module">
+    import {Chessboard, FEN} from "../../src/Chessboard.js"
+    import {HtmlLayer} from "../../src/extensions/html-layer/HtmlLayer.js"
+    import {Markers} from "../../src/extensions/markers/Markers.js"
+
+    const board = new Chessboard(document.getElementById("board"), {
+        position: FEN.start,
+        assetsUrl: "../../assets/",
+        extensions: [{class: HtmlLayer}, {class: Markers}]
+    })
+    board.enableMoveInput(() => true)
+    let layer = null
+    window.addLayer = () => {
+       if(!layer) {
+           layer = board.addHtmlLayer("<div>Welcome to cm-chessboard!</div>")
+           layer.addEventListener("click", () => {
+               window.removeLayer()
+           })
+       }
+    }
+    window.removeLayer = () => {
+        if(layer) {
+            board.removeHtmlLayer(layer)
+            layer = null
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>cm-chessboard</title>
+    <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1.0"/>
+    <link rel="stylesheet" href="../styles/examples.css"/>
+    <link rel="stylesheet" href="../../assets/chessboard.css"/>
+    <link rel="stylesheet" href="../../assets/extensions/arrows/arrows.css"/>
+</head>
+<body>
+<h1><a href="../..">cm-chessboard</a></h1>
+<h2>Example: Arrows extension</h2>
+<div class="board" id="board"></div>
+<br style="clear: both"/>
+<h2>Example code</h2>
+<pre>
+const chessboard = new Chessboard(document.getElementById("board"), {
+    position: "rn2k1r1/ppp1pp1p/3p2p1/5bn1/P7/2N2B2/1PPPPP2/2BNK1RR w Gkq - 4 11",
+    assetsUrl: "../../assets/",
+    extensions: [{class: Arrows}]
+})
+chessboard.addArrow(ARROW_TYPE.default, "f3", "d5")
+chessboard.addArrow(ARROW_TYPE.default, "b8", "c6")
+chessboard.addArrow(ARROW_TYPE.pointy, "d2", "d3")
+chessboard.addArrow(ARROW_TYPE.danger, "g5", "e6")
+console.log(chessboard.getArrows())
+</pre>
+<h2>Methods</h2>
+<h3><code>addArrow(type, from, to)</code></h3>
+<h3><code>removeArrows(type, from, to)</code></h3>
+<p>
+    To remove all arrows, call <code>chessboard.removeArrows()</code> without parameters. To remove all arrows of a
+    specific
+    type (type "danger"), call <code>chessboard.removeArrows(ARROW_TYPE.danger)</code>. To remove all arrows starting at
+    "e2"
+    you can call <code>chessboard.removeArrows(undefined, "e2")</code> and so on...
+</p>
+<h3><code>getArrows(type, from, to)</code></h3>
+<p>
+    To get all arrows, call <code>chessboard.getArrows()</code> without parameters, as with <code>removeArrows(type,
+    from, to)</code>.
+</p>
+
+<script type="module">
+    import {ARROW_TYPE, Arrows} from "../../src/extensions/arrows/Arrows.js"
+    import {Chessboard} from "../../src/Chessboard.js"
+
+    const chessboard = new Chessboard(document.getElementById("board"), {
+        position: "rn2k1r1/ppp1pp1p/3p2p1/5bn1/P7/2N2B2/1PPPPP2/2BNK1RR w Gkq - 4 11",
+        assetsUrl: "../../assets/",
+        extensions: [{class: Arrows}]
+    })
+    chessboard.addArrow(ARROW_TYPE.default, "f3", "d5")
+    chessboard.addArrow(ARROW_TYPE.default, "b8", "c6")
+    chessboard.addArrow(ARROW_TYPE.pointy, "d2", "d3")
+    chessboard.addArrow(ARROW_TYPE.danger, "g5", "e6")
+    console.log(chessboard.getArrows())
+
+</script>
+</body>
+</html>

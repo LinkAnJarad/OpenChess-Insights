@@ -1,0 +1,36 @@
+svg.cm-chessboard {
+  .promotion-dialog-group {
+
+    rect, g[data-piece] {
+      animation: fade-in 0.25s ease-in;
+    }
+
+    .promotion-dialog {
+      fill: white;
+      fill-opacity: 0.7;
+      stroke: rgba(0, 0, 0, 0.4);
+    }
+
+    .promotion-dialog-button {
+      fill: transparent;
+      cursor: pointer;
+
+      &:hover {
+        fill: rgba(0, 0, 0, 0.2)
+      }
+    }
+
+    .piece {
+      pointer-events: none;
+    }
+  }
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}

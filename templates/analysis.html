@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="{{ url_for('static', filename='js/assets/extensions/markers/markers.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='js/examples/styles/examples.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='js/assets/chessboard.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='js/assets/extensions/markers/markers.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/analysis.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='js/assets/extensions/arrows/arrows.css') }}"/>
+</head>
+
+<body>
+    <div class="sidebar-left">
+
+        <div class="review-container">
+
+            <h1 class="clf-text" id="classification-text">Click the arrow buttons to get started.</h1>
+
+            <p id="review-text"></p>
+
+            <h1 class="best-move-text" id="best-move-text"></h1>
+
+            <p id="best-review-text"></p>
+
+
+        </div>
+        <div class="metrics-container">
+
+            <p>Development</p>
+
+            <div class="metric-bar-container">
+                <div class="metric-bar" id="dev-bar"></div>
+            </div>
+
+            <p>Tension and Pressure</p>
+
+                <div class="metric-bar-container">
+                <div class="metric-bar" id="ten-bar"></div>
+            </div>
+
+            <p>Mobility</p>
+
+            <div class="metric-bar-container">
+                <div class="metric-bar" id="mob-bar"></div>
+            </div>
+
+            <p>Control</p>
+
+            <div class="metric-bar-container">
+                <div class="metric-bar" id="cont-bar"></div>
+            </div>
+
+        </div>
+        
+        <div class="spacer" style="height:500px"></div>
+
+    </div>
+
+    <div class="middlebar">
+        
+        <div id="board"></div>
+
+    </div>
+
+    <div class="eval-bar-container" id="eval-bar-container">
+        <div class="eval-bar" id="eval-bar"></div>
+        <div class="eval-bar-tip" id="eval-bar-tip"></div>
+    </div>
+
+    <div class="sidebar-right">
+        
+        <div class="sidebar-right-header">
+            <p>OpenChess: Insights</p>
+        </div>
+
+        <div class="sidebar-right-moves">
+
+            <div class="accuracyelo-container">
+                <div class="accuracyelo-white-cont">
+                    <h2 id="accuracy-white">62%</h2>
+                    <p>Accuracy</p>
+                </div>
+                <div class="accuracyelo-black-cont">
+                    <h2 id="accuracy-black">62%</h2>
+                    <p>Accuracy</p>
+                </div>
+            </div>
+
+            <div class="accuracyelo-container">
+                <div class="accuracyelo-white-cont">
+                    <h2 id="elo-white">1280</h2>
+                    <p>Estimated ELO</p>
+                </div>
+                <div class="accuracyelo-black-cont">
+                    <h2 id="elo-black">880</h2>
+                    <p>Estimated ELO</p>
+                </div>
+            </div>
+
+            <div class="accuracyelo-container">
+                <div class="accuracyelo-white-cont">
+                    <h2 id="acpl-white">1280</h2>
+                    <p>ACPL</p>
+                </div>
+                <div class="accuracyelo-black-cont">
+                    <h2 id="acpl-black">880</h2>
+                    <p>ACPL</p>
+                </div>
+            </div>
+
+            <div class="summary-move-counts">
+
+                <div class="move-count">
+                    <p id="move-count-book-text"></p>
+                </div>
+                
+                <div class="move-count">
+                    <p id="move-count-brilliant-text"></p>
+                </div>
+                
+                <div class="move-count">
+                    <p id="move-count-best-text"></p>
+                </div>
+                
+                <div class="move-count">
+                    <p id="move-count-excellent-text"></p>
+                </div>
+                
+                <div class="move-count">
+                    <p id="move-count-good-text"></p>
+                </div>
+                
+                <div class="move-count">
+                    <p id="move-count-inaccuracy-text"></p>
+                </div>
+                
+                <div class="move-count">
+                    <p id="move-count-mistake-text"></p>
+                </div>
+                
+                <div class="move-count">
+                    <p id="move-count-blunder-text"></p>
+                </div>
+                
+            </div>
+
+        </div>
+
+        <div class="sidebar-right-footer">
+
+            <div class="switch-container">
+                <img src="{{ url_for('static', filename='img/switch.svg') }}" onclick="window.board.setOrientation(window.board.getOrientation() === 'w' ? 'b' : 'w')">
+            </div>
+
+            <div class="arrow-container-left">
+                <img src="{{ url_for('static', filename='img/arrowleft.svg') }}">
+            </div>
+
+            <div class="arrow-container-right">
+                <img src="{{ url_for('static', filename='img/arrowright.svg') }}">
+            </div>
+
+        </div>
+
+    </div>
+    
+</body>
+
+
+<script type="module">
+    // IMPORTS -------------------------------------------------------------------------------------------
+
+    import {INPUT_EVENT_TYPE, Chessboard} from "{{ url_for('static', filename='js/src/Chessboard.js') }}"
+    import {FEN} from "{{ url_for('static', filename='js/src/model/Position.js') }}"
+    import {Markers} from "{{ url_for('static', filename='js/src/extensions/markers/Markers.js') }}"
+    import {Chess} from "https://cdn.jsdelivr.net/npm/chess.mjs@1/src/chess.mjs/Chess.js"
+    import {ARROW_TYPE, Arrows} from "{{ url_for('static', filename='js/src/extensions/arrows/Arrows.js') }}"
+
+    // LOAD ANALYSIS RESULTS  -------------------------------------------------------------------------------------------
+    var moves = {{ move_list | safe }}
+    var fens = {{ fen_list | safe }}
+    var scores = {{ score_list | safe }}
+    var classifications = {{ cls_list | safe }}
+    var reviews = {{ review_list | safe }}
+    var bestReviews = {{ best_review_list | safe }}
+    var bestMoves = {{ best_move_list | safe }}
+    var bestMovesUci = {{ best_move_uci_list | safe }}
+    var developments = {{ dev_list | safe }}
+    var tensions = {{ ten_list | safe }}
+    var mobilities = {{ mob_list | safe }}
+    var controls = {{ cont_list | safe }}
+    var eloPair = {{ elo_pair | safe }}
+    var accPair = {{ acc_pair | safe }}
+    var acplPair = {{ acpl_pair | safe }}
+
+    // ORGANIZE MOVES
+
+    document.getElementById('accuracy-white').innerHTML = accPair[0]+"%";
+    document.getElementById('accuracy-black').innerHTML = accPair[1]+"%";
+    document.getElementById('elo-white').innerHTML = eloPair[0];
+    document.getElementById('elo-black').innerHTML = eloPair[1];
+    document.getElementById('acpl-white').innerHTML = acplPair[0];
+    document.getElementById('acpl-black').innerHTML = acplPair[1];
+
+
+    var numBookMoves = [0, 0];
+    var numBrilliantMoves = [0, 0];
+    var numBestMoves = [0, 0];
+    var numExcellentMoves = [0, 0];
+    var numGoodMoves = [0, 0];
+    var numInaccuracyMoves = [0, 0];
+    var numMistakeMoves = [0, 0];
+    var numBlunderMoves = [0, 0];
+
+    for (const [i, move] of classifications.entries()) {
+        if ((i%2) == 0) {
+            if (move == 'book') {
+                numBookMoves[0] += 1;
+            } else if (move == 'brilliant') {
+                numBrilliantMoves[0] += 1;
+            } else if (move == 'best') {
+                numBestMoves[0] += 1;
+            } else if (move == 'excellent') {
+                numExcellentMoves[0] += 1;
+            } else if (move == 'good') {
+                numGoodMoves[0] += 1;
+            } else if (move == 'inaccuracy') {
+                numInaccuracyMoves[0] += 1;
+            } else if (move == 'mistake') {
+                numMistakeMoves[0] += 1;
+            } else if (move == 'blunder') {
+                numBlunderMoves[0] += 1;
+            } 
+        } else {
+            if (move == 'book') {
+                numBookMoves[1] += 1;
+            } else if (move == 'brilliant') {
+                numBrilliantMoves[1] += 1;
+            } else if (move == 'best') {
+                numBestMoves[1] += 1;
+            } else if (move == 'excellent') {
+                numExcellentMoves[1] += 1;
+            } else if (move == 'good') {
+                numGoodMoves[1] += 1;
+            } else if (move == 'inaccuracy') {
+                numInaccuracyMoves[1] += 1;
+            } else if (move == 'mistake') {
+                numMistakeMoves[1] += 1;
+            } else if (move == 'blunder') {
+                numBlunderMoves[1] += 1;
+            } 
+        }
+    }
+
+    document.getElementById('move-count-book-text').innerHTML = numBookMoves[0] + "  Book <i class='bx bx-book-open'></i>  " + numBookMoves[1];
+
+    document.getElementById('move-count-brilliant-text').innerHTML = numBrilliantMoves[0] + "  Brilliant <i class='bx bx-brain' ></i>  " + numBrilliantMoves[1];
+
+    document.getElementById('move-count-best-text').innerHTML = numBestMoves[0] + "  Best <i class='bx bxs-badge-check'></i>  " + numBestMoves[1];
+
+    document.getElementById('move-count-excellent-text').innerHTML = numExcellentMoves[0] + "  Excellent <i class='bx bx-star' ></i>  " + numExcellentMoves[1];
+
+    document.getElementById('move-count-good-text').innerHTML = numGoodMoves[0] + "  Good <i class='bx bx-check-circle' ></i>  " + numGoodMoves[1];
+
+    document.getElementById('move-count-inaccuracy-text').innerHTML = numInaccuracyMoves[0] + "  Inaccuracy <i class='bx bx-question-mark' ></i>  " + numInaccuracyMoves[1];
+
+    document.getElementById('move-count-mistake-text').innerHTML = numMistakeMoves[0] + "  Mistake <i class='bx bx-x-circle' ></i>  " + numMistakeMoves[1];
+
+    document.getElementById('move-count-blunder-text').innerHTML = numBlunderMoves[0] + "  Blunder <i class='bx bx-error-alt' ></i>  " + numBlunderMoves[1];
+
+    for (const [i, move] of moves.entries()) {
+
+        if ((i%2) == 0) {
+
+            var movebarDiv = document.createElement('div');
+            movebarDiv.className = 'movebar';
+            document.getElementsByClassName('sidebar-right-moves')[0].appendChild(movebarDiv);
+
+            var movenumDiv = document.createElement('div');
+            movenumDiv.className = 'move-num';
+            movenumDiv.innerHTML = Math.floor(i/2)+1;
+            movebarDiv.appendChild(movenumDiv);
+
+            var movewhiteDiv = document.createElement('div');
+            movewhiteDiv.className = 'move-container';
+            movewhiteDiv.innerHTML = move;
+            movewhiteDiv.setAttribute('data-fen', fens[i]);
+            movebarDiv.appendChild(movewhiteDiv);
+
+        } else {
+
+            var moveblackDiv = document.createElement('div');
+            moveblackDiv.className = 'move-container';
+            moveblackDiv.innerHTML = move;
+            moveblackDiv.setAttribute('data-fen', fens[i]);
+            movebarDiv.appendChild(moveblackDiv);
+
+        }
+    }
+
+    if ((moves.length)%2 == 1) {
+        var moveblackDiv = document.createElement('div');
+        moveblackDiv.className = 'move-container-null';
+        moveblackDiv.innerHTML = ''
+        movebarDiv.appendChild(moveblackDiv);
+    }
+
+    // LOAD CHESSBOARD -------------------------------------------------------------------------------------------
+
+    const chess = new Chess()
+
+    window.board = new Chessboard(document.getElementById("board"), {
+        position: FEN.start,
+        assetsUrl: "{{ url_for('static', filename='js/assets/') }}",
+        style: {pieces: {file: "{{ url_for('static', filename='js/assets/pieces/staunty.svg') }}"}},
+        extensions: [
+            {class: Markers},
+            {class: Arrows}]
+    })
+
+    window.board.enableMoveInput(inputHandler)
+
+    function inputHandler(event) {
+        console.log(event)
+        switch (event.type) {
+            case INPUT_EVENT_TYPE.moveInputStarted:
+                //log(`moveInputStarted: ${event.squareFrom}`)
+                return true // false cancels move
+            case INPUT_EVENT_TYPE.validateMoveInput:
+                //log(`validateMoveInput: ${event.squareFrom}-${event.squareTo}`)
+                return true // false cancels move
+            case INPUT_EVENT_TYPE.moveInputCanceled:
+                //log(`moveInputCanceled`)
+                break
+            case INPUT_EVENT_TYPE.moveInputFinished:
+                //log(`moveInputFinished`)
+                break
+            case INPUT_EVENT_TYPE.movingOverSquare:
+                //log(`movingOverSquare: ${event.squareTo}`)
+                break
+        }
+    }
+
+    // MOVES FUNCTIONALITY -------------------------------------------------------------------------------------------
+
+    var moveDivs = document.querySelectorAll('.move-container');
+    let currentIndex = -1;
+    var evaluationBarCont = document.getElementById("eval-bar-container");
+    var evalbarTip = document.getElementById("eval-bar-tip")
+
+    // Add click event listener to each inner div
+
+    function updateSelectedMove(selectedIndex) {
+
+        moveDivs.forEach(
+            function(div, index) {
+                moveDivs[index].classList.remove('move-container-clicked');
+            }
+        )
+
+        if (selectedIndex == -1) {
+            setBoardFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+            updateEvaluationBar;
+            document.getElementById("classification-text") = '';
+        }
+
+        window.board.removeArrows();
+
+        moveDivs[selectedIndex].classList.add('move-container-clicked');
+
+        setBoardFen(moveDivs[selectedIndex].getAttribute('data-fen'));
+
+        updateEvaluationBar(selectedIndex)
+
+        evalbarTip.innerHTML = scores[selectedIndex]/100;
+
+        updateClassification(selectedIndex);
+
+        updateReview(selectedIndex);
+
+        updateBestReview(selectedIndex);
+
+        updateDevBar(selectedIndex);
+
+        updateTenBar(selectedIndex);
+
+        updateMobBar(selectedIndex);
+
+        updateContBar(selectedIndex);
+
+        updateBestMove(selectedIndex);
+
+        updateBestMoveArrow(selectedIndex);
+
+    }
+
+    function updateBestMoveArrow(index) {
+
+        var fromSquare = bestMovesUci[index][0];
+        var toSquare = bestMovesUci[index][1];
+
+        window.board.addArrow(ARROW_TYPE.default, fromSquare, toSquare);
+
+    }
+
+    function updateBestMove(index) {
+        const bestMoveText = document.getElementById("best-move-text")
+        if (classifications[index] == 'book') {
+            bestMoveText.innerHTML = "";
+            window.board.removeArrows();
+        } else if (classifications[index] == 'best') {
+            bestMoveText.innerHTML = "";
+            window.board.removeArrows();
+        } else {
+            bestMoveText.innerHTML = bestMoves[index] + " is best.";
+        }
+    }
+    
+    
+    function updateDevBar(index) {
+        const devBar = document.getElementById("dev-bar");
+        // Map the score to the bar height (adjust the scale based on your scores)
+        if ((developments[index][0] == 0) && (developments[index][1] == 0)) {
+            devBar.style.width = "50%";
+        } else {
+            const barHeightPerc = (developments[index][0] / (developments[index][0] + developments[index][1]))*100;
+            // Update the bar height with a smooth transition
+            devBar.style.width = barHeightPerc + "%";
+        }
+    }
+
+    function updateTenBar(index) {
+        const devBar = document.getElementById("ten-bar");
+        // Map the score to the bar height (adjust the scale based on your scores)
+        if ((tensions[index][0] == 0) && (tensions[index][1] == 0)) {
+            devBar.style.width = "50%";
+        } else {
+            const barHeightPerc = (tensions[index][0] / (tensions[index][0] + tensions[index][1]))*100;
+            // Update the bar height with a smooth transition
+            devBar.style.width = barHeightPerc + "%";
+        }
+    }
+
+    function updateMobBar(index) {
+        const devBar = document.getElementById("mob-bar");
+        // Map the score to the bar height (adjust the scale based on your scores)
+        if ((mobilities[index][0] == 0) && (mobilities[index][1] == 0)) {
+            devBar.style.width = "50%";
+        } else {
+            const barHeightPerc = (mobilities[index][0] / (mobilities[index][0] + mobilities[index][1]))*100;
+            // Update the bar height with a smooth transition
+            devBar.style.width = barHeightPerc + "%";
+        }
+    }
+
+    function updateContBar(index) {
+        const devBar = document.getElementById("cont-bar");
+        // Map the score to the bar height (adjust the scale based on your scores)
+        if ((controls[index][0] == 0) && (controls[index][1] == 0)) {
+            devBar.style.width = "50%";
+        } else {
+            const barHeightPerc = (controls[index][0] / (controls[index][0] + controls[index][1]))*100;
+            // Update the bar height with a smooth transition
+            devBar.style.width = barHeightPerc + "%";
+        }
+    }
+
+    moveDivs.forEach(function(div, index) {
+        div.addEventListener('click', function() {
+            // Pass the id as a parameter to the onclick function
+            updateSelectedMove(index);
+            currentIndex = index;
+        });
+    });
+
+    function updateClassification(index) {
+        var classificationText = document.getElementById("classification-text");
+        var cls = classifications[index];
+
+        if (cls.includes("excellent")) {
+            classificationText.style.color = '#6cb400'
+            classificationText.innerHTML = moves[index] + " is " + cls;
+        } else if (cls.includes("good")) {
+            classificationText.style.color = '#758358'
+            classificationText.innerHTML = moves[index] + " is " + cls;
+        } else if (cls.includes("inaccuracy")) {
+            classificationText.style.color = '#ffff00'
+            classificationText.innerHTML = moves[index] + " is an " + cls;
+        } else if (cls.includes("mistake")) {
+            classificationText.style.color = '#ff9500'
+            classificationText.innerHTML = moves[index] + " is a " + cls;
+        } else if (cls.includes("blunder")) {
+            classificationText.style.color = '#ff0000'
+            classificationText.innerHTML = moves[index] + " is a " + cls;
+        } else if (cls.includes("best")) {
+            classificationText.style.color = '#6cb400'
+            classificationText.innerHTML = moves[index] + " is " + cls;
+        } else if (cls.includes("book")) {
+            classificationText.style.color = 'gray'
+            classificationText.innerHTML = moves[index] + " is a book move";
+        } else if (cls.includes("forced")) {
+            classificationText.style.color = 'gray'
+            classificationText.innerHTML = moves[index] + " is " + cls;
+        } else if (cls.includes("brilliant")) {
+            classificationText.style.color = '#2681ff'
+            classificationText.innerHTML = moves[index] + " is brilliant!";
+        }
+    }
+
+    function updateReview(index) {
+        var reviewText = document.getElementById("review-text");
+        reviewText.innerHTML = reviews[index];
+    }
+
+    function updateBestReview(index) {
+        var bestReviewText = document.getElementById("best-review-text");
+        bestReviewText.innerHTML = bestReviews[index];
+    }
+
+    function setBoardFen(fen) {
+        window.board.setPosition(fen, true);
+    }
+
+    // Function to update the evaluation bar based on the score
+    function updateEvaluationBar(index) {
+        var score = scores[index];
+        var barHeightPerc;
+        const evaluationBar = document.getElementById("eval-bar");
+        // Map the score to the bar height (adjust the scale based on your scores)
+
+        if (score == 10000) {
+            barHeightPerc = 0;
+        } else if (score == -10000) {
+            barHeightPerc = 100;
+        } else {
+            barHeightPerc = (-score/20)+50;
+        }
+
+        // Update the bar height with a smooth transition
+        evaluationBar.style.height = barHeightPerc + "%";
+    }
+    
+    // Show the tooltip on hover
+    evaluationBarCont.addEventListener("mouseover", function () {
+        evalbarTip.style.display = "block";
+    });
+
+    // Hide the tooltip when not hovering
+    evaluationBarCont.addEventListener("mouseout", function () {
+        evalbarTip.style.display = "none";
+    });
+    
+
+    // Function to navigate to the previous move
+    function goToPreviousMove() {
+        if (currentIndex >= 0) {
+            currentIndex--;
+            updateSelectedMove(currentIndex);
+        }
+    }
+
+    // Function to navigate to the next move
+    function goToNextMove() {
+        if (currentIndex < moveDivs.length - 1) {
+            currentIndex++;
+            updateSelectedMove(currentIndex);
+        }
+    }
+
+    var nextmoveDiv = document.getElementsByClassName('arrow-container-right')[0];
+    nextmoveDiv.addEventListener('click', function() {
+        goToNextMove();
+    });
+
+    var prevmoveDiv = document.getElementsByClassName('arrow-container-left')[0];
+    prevmoveDiv.addEventListener('click', function() {
+        goToPreviousMove();
+    });
+
+
+</script>
+
+</html>

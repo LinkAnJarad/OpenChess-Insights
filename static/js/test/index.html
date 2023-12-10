@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test cm-chessboard</title>
+    <link rel="stylesheet" href="../examples/styles/examples.css"/>
+    <link rel="stylesheet" href="../assets/chessboard.css"/>
+    <style>
+        .board {
+            position: absolute;
+            right: 20px;
+            width: 200px;
+            height: 200px;
+        }
+    </style>
+</head>
+<body>
+<h1><a href="../">cm-chessboard</a></h1>
+<p><i>Lightweight unit testing with <a href="https://github.com/shaack/teevi">Teevi</a></i>.</p>
+<div class="board" id="TestBoard"></div>
+<div class="board" id="TestPosition"></div>
+<div class="board" id="TestMarkers"></div>
+<script type="module">
+    import {teevi} from "../node_modules/teevi/src/teevi.js"
+    import "./TestChessboard.js"
+    import "./TestBoard.js"
+    import "./TestPiecesAnimation.js"
+    import "./TestMarkers.js"
+    import "./TestPosition.js"
+    teevi.run()
+</script>
+</body>
+</html>

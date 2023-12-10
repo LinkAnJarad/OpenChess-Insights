@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>cm-chessboard</title>
+    <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1.0"/>
+    <link rel="stylesheet" href="styles/examples.css"/>
+    <link rel="stylesheet" href="../assets/chessboard.css"/>
+    <!--suppress CssUnusedSymbol -->
+    <style>
+        div.board {
+            float: left;
+            width: 155px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+<h1><a href="../">cm-chessboard</a></h1>
+<h2>Example: 100 boards in one page</h2>
+<div id="boards"></div>
+<!--suppress JSUnresolvedFunction -->
+<script type="module">
+    import {Chessboard} from "../src/Chessboard.js"
+    import {Chess} from "https://cdn.jsdelivr.net/npm/chess.mjs@1/src/chess.mjs/Chess.js"
+
+    const boardsDiv = document.getElementById("boards")
+    const game = new Chess()
+    for (let i = 0; i < 100; i++) {
+        const boardDiv = document.createElement("div")
+        boardDiv.setAttribute("class", "board")
+        boardsDiv.appendChild(boardDiv)
+        new Chessboard(boardDiv, {
+            responsive: false,
+            position: game.fen(),
+            assetsUrl: "../assets/",
+            style: {pieces: {file: "pieces/staunty.svg"}},
+        })
+        makeRandomMove()
+    }
+    function makeRandomMove() {
+        const possibleMoves = game.moves();
+        if (possibleMoves.length === 0) return;
+        const randomIndex = Math.floor(Math.random() * possibleMoves.length);
+        game.move(possibleMoves[randomIndex]);
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>cm-chessboard</title>
+    <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1.0"/>
+    <link rel="stylesheet" href="styles/examples.css"/>
+    <link rel="stylesheet" href="../assets/chessboard.css"/>
+    <!--suppress CssUnusedSymbol -->
+    <style>
+        div.board {
+            float: left;
+            width: 4.2vw;
+            height: 4.2vw;
+            margin-right: 0.2vw;
+            margin-bottom: 0.2vw;
+        }
+
+        div.board1 {
+            float: left;
+            width: 43.1vw;
+            margin-right: 0.9vw;
+            margin-bottom: 0.5vw;
+        }
+    </style>
+</head>
+<body>
+<h1><a href="../">cm-chessboard</a></h1>
+<h2>Stress Test: Create and destroy 5,000 boards ⇨ <span id="counter"></span></h2>
+<div id="boards"></div>
+<script type="module">
+    import {Chessboard} from "../src/Chessboard.js"
+    import {FEN} from "../src/model/Position.js"
+    import {Chess} from "https://cdn.jsdelivr.net/npm/chess.mjs@1/src/chess.mjs/Chess.js"
+
+    const boardsDiv = document.getElementById("boards")
+    const boardDiv = document.createElement("div")
+    boardDiv.setAttribute("class", "board1")
+    boardsDiv.appendChild(boardDiv)
+    const largeBoard = new Chessboard(boardDiv, {
+        position: FEN.start,
+        assetsUrl: "../assets/",
+        style: {pieces: {file: "pieces/staunty.svg"}}
+    })
+    const chess = new Chess()
+    let count = 0;
+    for (let i = 0; i < 5000; i++) {
+        setTimeout(() => {
+            count++
+            document.getElementById("counter").innerText = "" + count
+            const boardDiv = document.createElement("div")
+            boardDiv.setAttribute("class", "board")
+            boardsDiv.appendChild(boardDiv)
+            const board = new Chessboard(boardDiv, {
+                position: chess.fen(),
+                assetsUrl: "../assets/",
+                style: {pieces: {file: "pieces/staunty.svg"}}
+            })
+            makeRandomMove()
+            largeBoard.setPosition(chess.fen(), true)
+            setTimeout(() => {
+                board.destroy()
+                boardsDiv.removeChild(boardDiv)
+            }, 10000)
+        }, i * 100)
+    }
+
+    function makeRandomMove() {
+        if(chess.game_over()) {
+            chess.reset()
+        }
+        const possibleMoves = chess.moves()
+        if (possibleMoves.length === 0) return
+        const randomIndex = Math.floor(Math.random() * possibleMoves.length)
+        chess.move(possibleMoves[randomIndex])
+    }
+
+</script>
+</body>
+</html>

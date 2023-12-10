@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>cm-chessboard</title>
+    <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1.0"/>
+    <link rel="stylesheet" href="../styles/examples.css"/>
+    <link rel="stylesheet" href="../../assets/chessboard.css"/>
+    <link rel="stylesheet" href="../../assets/extensions/markers/markers.css"/>
+</head>
+<body>
+<h1><a href="../..">cm-chessboard</a></h1>
+<h2>Example: Accessibility extension</h2>
+<p>
+    This example shows, how the accessibility extension from cm-chessboard works.
+    It allows a better usage of the board for visually impaired
+    people.
+</p>
+<p>
+    The <a href="../validate-moves.html">validate moves</a> example has also
+    accessibility features enabled, but visually hidden.
+</p>
+<h3>Features of the Accessibility extension</h3>
+<ul>
+    <li>Enable Braille notation in the alt text of the chessboard image</li>
+    <li>Display the chessboard additionally as HTML table</li>
+    <li>Display a form to move a piece (from, to, move)</li>
+    <li>Display the pieces additionally as List</li>
+    <li>Display these features visually hidden or not</li>
+</ul>
+<h3>The chessboard</h3>
+<div class="board" id="board"></div>
+<button style="margin-bottom: 10px"
+        onclick="window.switchOrientation()">Switch Orientation
+</button>
+<script type="module">
+    import {Chessboard} from "../../src/Chessboard.js"
+    import {Accessibility} from "../../src/extensions/accessibility/Accessibility.js"
+    import {Markers} from "../../src/extensions/markers/Markers.js"
+
+    const chessboard = new Chessboard(document.getElementById("board"), {
+        position: "rn2k1r1/ppp1pp1p/3p2p1/5bn1/P7/2N2B2/1PPPPP2/2BNK1RR w Gkq - 4 11",
+        assetsUrl: "../../assets/",
+        // animationDuration: 0, // optional, set to 0 to disable animations
+        style: {
+            cssClass: "default-contrast" // make the coordinates better visible with the "default-contrast" theme
+        },
+        extensions:
+            [{
+                class: Accessibility,
+                props: {
+                    brailleNotationInAlt: true, // show the braille notation of the game in the alt attribute of the SVG
+                    boardAsTable: true, // display the board additionally as HTML table
+                    movePieceForm: true, // display a form to move a piece (from, to, move)
+                    piecesAsList: true, // display the pieces additionally as List
+                    visuallyHidden: false // hide all those extra outputs visually but keep them accessible for screen readers and braille displays
+                }
+
+            }, {class: Markers}]
+    })
+    window.switchOrientation = function () {
+        chessboard.setOrientation(chessboard.getOrientation() === 'w' ? 'b' : 'w')
+    }
+
+    chessboard.enableMoveInput(() => true)
+
+</script>
+</body>
+</html>

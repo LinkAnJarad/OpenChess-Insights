@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+</head>
+
+<body>
+
+    <div class="content">
+
+        <div class="input">
+            <h1> ♟️OpenChess: Insights</h1>
+                <p>Enter PGN:</p>
+                <form action="/views/analysis" method="post">
+                    <textarea name="pgn" rows="10" cols="50" required></textarea>
+                    <br>
+                    <input type="submit" value="Submit">
+                <br>
+                </form>
+        </div>
+
+    </div>
+    
+    <footer>
+        
+    </footer>
+
+
+    
+    
+</body>
+</html>

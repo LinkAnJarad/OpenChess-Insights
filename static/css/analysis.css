@@ -1,0 +1,462 @@
+body {
+    background-color: #1b1b1b;
+    margin: 0px;
+    padding: 0px;
+    color: rgb(255, 255, 255);
+    align-items: center;
+    font-family: 'Microsoft JhengHei UI Light';
+    display: flex;
+    height: 100vh;
+}
+
+/* width */
+::-webkit-scrollbar {
+    width: 15px;
+}
+  
+/* Track */
+::-webkit-scrollbar-track {
+    background: #000000; 
+}
+   
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: #333333; 
+}
+
+h1 {
+    font-size: 60px;
+    font-family: "Microsoft JhengHei UI Light";
+    text-align: center;
+    font-weight: lighter;
+}
+
+p {
+    font-size: 16px;
+    font-family: "Microsoft JhengHei UI Light";
+}
+
+.sidebar-left {
+    border: none;
+    background-color: #232323;
+    margin: 2%;
+    width: 25%;
+    min-height: 95%;
+    max-height: 95%;
+    font-family: "Microsoft JhengHei UI Light";
+    overflow-y: scroll;
+}
+
+.review-container {
+    margin: 5%;
+    margin-left: 7%;
+    margin-right: 7%;
+    height: 40%;
+}
+
+.review-container h1 {
+    color: rgb(108, 180, 0);
+    font-size: 35px;
+}
+
+.clf-text {
+    color: #6cb400;
+    font-size: 35px;
+}
+
+.best-move-text {
+    color: #6cb400;
+    font-size: 35px;
+}
+
+.review-container p {
+    font-size: 16px;
+}
+
+.metrics-wrapper {
+    position: fixed;
+}
+
+.metrics-container {
+    margin-top: 20px;
+    margin-bottom: 5%;
+    margin-left: 7%;
+    margin-right: 7%;
+    height: 60%;
+    padding-top: 5%;
+}
+
+.metrics-container p {
+    font-size: 15px;
+    margin: 0px;
+}
+
+.metric-bar-container {
+    width: 100%;
+    height: 20px; /* Adjust the height based on your preference */
+    background-color: #000000;
+    padding: 0px;
+    margin-bottom: 5%;
+    margin-top: 5%;
+}
+
+.metric-bar {
+    width: 50%;
+    height: 20px; /* Adjust the height based on your preference */
+    padding: 0px;
+    margin: 0px;
+    background-color: #ffffff;
+    transition: width 0.3s ease;
+}
+
+.sidebar-right {
+    background-color: #232323;
+    box-sizing: border-box;
+    margin: 2%;
+    padding: 0px;
+    width: 25%;
+    height: 95%;
+    font-family: 'Microsoft JhengHei UI Light';
+} 
+
+.sidebar-right-header {
+    background-color: #232323;
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0px;
+    height: 10%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    border-bottom: 1px solid #555555
+} 
+
+.sidebar-right-header p {
+    font-size: 20px;
+} 
+
+.sidebar-right-header p {
+    text-align: center;
+}
+
+.sidebar-right-moves {
+    background-color: #232323;
+    box-sizing: border-box;
+    width: 100%;
+    height: 83%;
+    margin: 0px;
+    overflow-y: scroll;
+} 
+
+.sidebar-right-footer {
+    background-color: #232323;
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0px;
+    height: 7%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    border-top: 1px solid #555555;
+    gap: 20px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+
+.accuracyelo-container {
+    display: flex;
+    height: 10%;
+    justify-content: center;
+    align-items: center;
+    margin: 0px;
+    padding: 5%;
+}
+
+.accuracyelo-white-cont {
+    text-align: center;
+    align-items: center;
+    padding: 5px;
+    height: 100%;
+    width: 30%;
+    border-radius: 10px;
+    background-color: white;
+    margin-right: 5%;
+    color: black;
+}
+
+.accuracyelo-white-cont h2 {
+    font-family: 'Microsoft JhengHei UI Light';
+    color: black;
+    font-size: 30px;
+    padding: 0px;
+    margin: 0px;
+}
+
+.accuracyelo-white-cont p {
+    font-family: 'Microsoft JhengHei UI Light';
+    color: black;
+    font-size: 12px;
+    padding: 0px;
+    margin: 0px;
+}
+
+.accuracyelo-black-cont {
+    text-align: center;
+    align-items: center;
+    padding: 5px;
+    height: 100%;
+    width: 30%;
+    border-radius: 10px;
+    background-color: black;
+    margin-left: 5%;
+}
+
+.accuracyelo-black-cont p {
+    font-family: 'Microsoft JhengHei UI Light';
+    color: rgb(255, 255, 255);
+    font-size: 12px;
+    padding: 0px;
+    margin: 0px;
+}
+
+.accuracyelo-black-cont h2 {
+    font-family: 'Microsoft JhengHei UI Light';
+    color: rgb(255, 255, 255);
+    font-size: 30px;
+    padding: 0px;
+    margin: 0px;
+}
+
+.summary-move-counts {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.move-count {
+    position: relative;
+    text-align: center;
+}
+
+#move-count-brilliant-text {
+    font-family: 'Microsoft JhengHei UI Light';
+    color: #2681ff;
+    font-size: 14px;
+    padding: 5px;
+    margin: 0px;
+}
+
+#move-count-book-text {
+    font-family: 'Microsoft JhengHei UI Light';
+    color: gray;
+    font-size: 14px;
+    padding: 5px;
+    margin: 0px;
+}
+
+#move-count-best-text {
+    font-family: 'Microsoft JhengHei UI Light';
+    color: #6cb400;
+    font-size: 14px;
+    padding: 5px;
+    margin: 0px;
+}
+
+#move-count-excellent-text {
+    font-family: 'Microsoft JhengHei UI Light';
+    color: #6cb400;
+    font-size: 14px;
+    padding: 5px;
+    margin: 0px;
+}
+
+#move-count-good-text {
+    font-family: 'Microsoft JhengHei UI Light';
+    color: #758358;
+    font-size: 14px;
+    padding: 5px;
+    margin: 0px;
+}
+
+#move-count-inaccuracy-text {
+    font-family: 'Microsoft JhengHei UI Light';
+    color: #ffff00;
+    font-size: 14px;
+    padding: 5px;
+    margin: 0px;
+}
+
+#move-count-mistake-text {
+    font-family: 'Microsoft JhengHei UI Light';
+    color: #ff9500;
+    font-size: 14px;
+    padding: 5px;
+    margin: 0px;
+}
+
+#move-count-blunder-text {
+    font-family: 'Microsoft JhengHei UI Light';
+    color: #ff0000;
+    font-size: 14px;
+    padding: 5px;
+    margin: 0px;
+}
+
+.switch-container {
+    padding: 0px;
+    margin: 0px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 15%;
+    height: 100%;
+    border-radius: 10px;
+}
+
+.switch-container:hover {
+    background-color: #353535;
+}
+
+.switch-container img {
+    height: 75%;
+}
+
+.arrow-container-left {
+    padding: 0px;
+    margin: 0px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 20%;
+    height: 100%;
+    border-radius: 10px;
+}
+
+.arrow-container-left:hover {
+    background-color: #353535;
+}
+
+.arrow-container-left img {
+    height: 80%;
+}
+
+.arrow-container-right {
+    padding: 0px;
+    margin: 0px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 20%;
+    height: 100%;
+    border-radius: 10px;
+}
+
+.arrow-container-right:hover {
+    background-color: #353535;
+}
+
+.arrow-container-right img {
+    height: 80%;
+}
+
+.middlebar {
+    position: relative;
+    display: flex;
+    border: none;
+    box-sizing: border-box;
+    height: 95%;
+    width: 46%;
+}
+
+.eval-bar-container {
+    width: 20px;
+    height: 95%; /* Adjust the height based on your preference */
+    background-color: #bebebe;
+    transition: height 0.3s ease;
+    padding: 0px;
+    margin: 0px;
+    margin-bottom: 5px;
+}
+
+.eval-bar {
+    width: 20px;
+    height: 50%; /* Adjust the height based on your preference */
+    padding: 0px;
+    margin: 0px;
+    background-color: #161616;
+    transition: height 0.3s ease;
+}
+
+.eval-bar-tip {
+    position: absolute;
+    top: 47.5%;
+    transform: translateX(-30%);
+    padding: 5px;
+    background-color: #ffffff;
+    color: #000;
+    border-radius: 5px;
+    display: none;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);
+}
+
+footer {
+    margin-right: 30px;
+    font-family: 'Lucida Console';
+    font-size: 20px;
+    text-align: right;
+}
+
+#board {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    margin: 0px;
+}
+
+.movebar {
+    display: flex;
+    font-size: 20px;
+    font-family: 'Microsoft JhengHei UI Light';
+    font-weight: 100;
+    height: 35px;
+}
+
+.move-num {
+    background-color: #333333;
+    width: 20%;
+    padding: 5px;
+    text-align: center;
+    border-right: 1px solid #555555;
+    color: #888888;
+}
+
+.move-container {
+    background-color: #232323;
+    width: 40%;
+    padding: 5px;
+    padding-left: 10px;
+}
+
+.move-container:hover {
+    background-color: #777777;
+}
+
+.move-container-clicked {
+    background-color: #ffffff;
+    width: 40%;
+    padding: 5px;
+    padding-left: 10px;
+    color: black;
+}
+
+.move-container-null {
+    background-color: #232323;
+    width: 40%;
+    padding-left: 16px;
+    color: rgb(0, 0, 0, 0);
+}
+

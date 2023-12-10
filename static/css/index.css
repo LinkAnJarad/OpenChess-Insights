@@ -1,0 +1,94 @@
+body {
+    background-color: #1b1b1b;
+    margin: 0px;
+    padding: 0px;
+    color: rgb(255, 255, 255);
+    align-items: center;
+    font-family: Arial;
+}
+
+/* width */
+::-webkit-scrollbar {
+    width: 15px;
+}
+  
+/* Track */
+::-webkit-scrollbar-track {
+    background: #000000; 
+}
+   
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: #333333; 
+}
+
+h1 {
+    font-size: 60px;
+    font-family: "Lucida Console";
+    text-align: center;
+    font-weight: lighter;
+}
+
+p {
+    font-size: 23px;
+    font-family: "Lucida Console";
+}
+
+form {
+    align-items: center;
+}
+
+.content {
+    width: 100%;
+    height: 660px;
+    background-size: cover;
+    display: flex;
+    align-items: center;
+    margin: 0px;
+    padding: 0px;
+}
+
+.input {
+    position: relative;
+    text-align: center;
+    margin-left: 33%;
+    width: 33%;
+}
+
+textarea {
+    background-color: rgba(0, 0, 0, 0);
+    font-family: 'Lucida Console';
+    color: white;
+    border-radius: 10px;
+    border-style: solid;
+    border-width: 2px;
+    border-color: white;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+input[type=submit] {
+    background-color: rgba(0, 0, 0, 0);
+    color: white;
+    border-radius: 10px;
+    border-color: white;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 40px;
+    padding-right: 40px;
+    border-style: solid;
+    font-family: 'Lucida Console';
+    font-size: 20px;
+}
+
+input[type=submit]:hover {
+    background-color: white;
+    color: black;
+}
+
+footer {
+    margin-right: 30px;
+    font-family: 'Lucida Console';
+    font-size: 20px;
+    text-align: right;
+}
