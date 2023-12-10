@@ -41,3 +41,6 @@ JS Chessboard interface from [cm-chessboard](https://github.com/shaack/cm-chessb
 Chess opening dataset from [lichess-org](https://github.com/lichess-org/chess-openings)
 
 Chess metrics inspired by [mptedesco](https://github.com/mptedesco/python-chess-analysis/tree/master?tab=GPL-3.0-1-ov-file)
+
+## Like my work?
+[Buy me a coffee!](https://www.buymeacoffee.com/linkanjarad)
