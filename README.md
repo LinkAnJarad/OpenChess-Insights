@@ -8,10 +8,7 @@ An open-source chess analysis web app runnable in your local machine powered by 
 - accuracy and estimated ELO calculations
 - move classifications: excellent, good, inaccuracies, mistakes, blunders, and *brilliant* moves
 
-<video controls>
-  <source src="preview.mp4" type="video/mp4">
-Your browser does not support the video tag.
-</video>
+https://github.com/LinkAnJarad/OpenChess-Insights/assets/79294502/ec2cb92f-52df-4f9b-b121-a2c03639db99
 
 **Ease-of-use for non-technical users is in development.**
 
