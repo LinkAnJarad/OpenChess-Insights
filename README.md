@@ -15,7 +15,6 @@ An open-source chess analysis web app runnable in your local machine powered by 
 
 https://github.com/LinkAnJarad/OpenChess-Insights/assets/79294502/ec2cb92f-52df-4f9b-b121-a2c03639db99
 
-**Ease-of-use for non-technical users is in development.**
 
 ## Setting up and running OCI
 
