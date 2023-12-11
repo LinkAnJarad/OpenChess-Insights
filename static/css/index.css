@@ -24,14 +24,14 @@ body {
 
 h1 {
     font-size: 60px;
-    font-family: "Lucida Console";
+    font-family: "Century Gothic";
     text-align: center;
     font-weight: lighter;
 }
 
-p {
-    font-size: 23px;
-    font-family: "Lucida Console";
+p, label {
+    font-size: 20px;
+    font-family: "Microsoft Jhenghei UI Light";
 }
 
 form {
@@ -77,7 +77,7 @@ input[type=submit] {
     padding-left: 40px;
     padding-right: 40px;
     border-style: solid;
-    font-family: 'Lucida Console';
+    font-family: 'Microsoft Jhenghei UI Light';
     font-size: 20px;
 }
 
@@ -86,6 +86,9 @@ input[type=submit]:hover {
     color: black;
 }
 
+labl {
+
+}
 footer {
     margin-right: 30px;
     font-family: 'Lucida Console';
