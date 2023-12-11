@@ -13,10 +13,7 @@ An open-source chess analysis web app runnable in your local machine powered by 
 - accuracy and estimated ELO calculations
 - move classifications: excellent, good, inaccuracies, mistakes, blunders, and *brilliant* moves
 
-<video controls>
-  <source src="preview.mp4" type="video/mp4">
-Your browser does not support the video tag.
-</video>
+https://github.com/LinkAnJarad/OpenChess-Insights/assets/79294502/ec2cb92f-52df-4f9b-b121-a2c03639db99
 
 **Ease-of-use for non-technical users is in development.**
 
@@ -44,8 +41,11 @@ The code in this repository is quite cluttered, and contains a lot of bugs.
 
 ## Acknowledgements
 
-JS Chessboard interface from [cm-chessboard](https://github.com/shaack/cm-chessboard)
+JS Chessboard interface from [cm-chessboard](https://github.com/shaack/cm-chessboard) (MIT License)
 
 Chess opening dataset from [lichess-org](https://github.com/lichess-org/chess-openings)
 
 Chess metrics inspired by [mptedesco](https://github.com/mptedesco/python-chess-analysis/tree/master?tab=GPL-3.0-1-ov-file)
+
+## Like my work?
+[Buy me a coffee!](https://www.buymeacoffee.com/linkanjarad)
