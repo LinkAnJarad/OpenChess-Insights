@@ -1,10 +1,7 @@
 # OpenChess: Insights (Beta)
 
 Updates:
-- Roast mode feature for harsher reviews on inaccuracies, mistakes, and blunders!
-
-- Improved ELO/rating estimation formula
-
+- Added adjustable stockfish search time and search depth
 
 An open-source chess analysis web app runnable in your local machine powered by Stockfish 16 NNUE. Includes:
 - move explanations in plain language similar to chess.com's game review
