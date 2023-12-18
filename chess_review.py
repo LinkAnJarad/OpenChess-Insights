@@ -4,24 +4,31 @@ import time
 import pandas as pd
 import re
 import chess.pgn
+from collections import Counter # for calculating captured pieces
+import math
 import numpy as np
 import io
 from tqdm import tqdm
-import os
-from collections import Counter # for calculating captured pieces
-import math
 
-stockfish_path = "stockfish-windows-x86-64-avx2.exe"
+stockfish_path = "stockfish.exe"
+
+
+STOCKFISH_CONFIG = {"time": 0.25}
+
 openings_df = pd.read_csv("openings_master.csv")
+# only 2 openings have more than 12 moves
 
-piece_dict = {
-    'k': 'King',
-    'n': 'Knight',
-    'q': 'Queen',
-    'r': 'Rook',
-    'p': 'Pawn',
-    'b': 'Bishop'
-}
+def search_opening(dataframe, pgn):
+
+    # Check if the search_string is in column 'A'
+    mask = dataframe['pgn'] == pgn
+
+    # If there is a match, return the corresponding value in column 'B'
+    if any(mask):
+        return dataframe.loc[mask, 'name'].iloc[0]
+    else:
+        return None
+
 
 def check_for_defended_pieces(board):
     for hanging_square in chess.SQUARES:
@@ -100,6 +107,7 @@ def is_hanging(board: chess.Board, square, capturable_by=None, return_list_of_at
 
         if not square_is_defended:
             attackers = list(board.attackers(capturable_by, square))
+        
             if len(attackers) > 0:
                 if return_list_of_attackers:
                     return attackers
@@ -128,6 +136,7 @@ def move_hangs_piece(board: chess.Board, move, return_hanging_squares=False):
         else:
             return True
 
+
 def move_defends_hanging_piece(board: chess.Board, move, return_list_defended=False):
 
     if board.is_castling(move):
@@ -153,7 +162,6 @@ def move_defends_hanging_piece(board: chess.Board, move, return_list_defended=Fa
         return True
     else:
         return False
-
 
 
 def move_creates_fork(board: chess.Board, move, return_forked_squares=False):        
@@ -197,15 +205,19 @@ def move_misses_fork(board: chess.Board, move, return_forking_moves=False):
     else:
         return True
         
+
 def is_forking(board: chess.Board, square, return_forked_squares=False):
     forked_squares = []
 
     square_can_be_captured_by = not board.piece_at(square).color
 
     if len(board.attackers(square_can_be_captured_by, square)) > 0:
-        if return_forked_squares:
-            return []
-        return False
+
+        if (not is_defended(board, square, not square_can_be_captured_by)):
+
+            if return_forked_squares:
+                return []
+            return False
 
     attacks = board.attacks(square)
     for attacked_square in attacks:
@@ -231,7 +243,7 @@ def is_forking(board: chess.Board, square, return_forked_squares=False):
 
         else:
             return False
-
+        
 def move_blocks_check(board: chess.Board, move):
 
     #move = board.parse_san(move)
@@ -250,27 +262,107 @@ def move_blocks_check(board: chess.Board, move):
     else:
         return False
 
-def has_mate_in_n(board, time_limit=0.2):
+def evaluate(board, return_mate_n=False):
     with chess.engine.SimpleEngine.popen_uci(stockfish_path) as engine:
-        info = engine.analyse(board, chess.engine.Limit(time=time_limit))
+        info = engine.analyse(board, chess.engine.Limit(**STOCKFISH_CONFIG))
+
+    possible_mate_score = str(info['score'].relative)
+    if '#' in possible_mate_score:
+
+        n = abs(int(possible_mate_score.replace("#", '')))
+
+        if '+' in possible_mate_score:
+            if board.turn == True: # if black played the mate move
+                if return_mate_n:
+                    return 10000, n
+                else:
+                    return 10000
+            else: # if white played the mate move
+                if return_mate_n:
+                    return -10000, n
+                else:
+                    return -10000
+        else:
+            if board.turn == True: # if black played the mate move
+                if return_mate_n:
+                    return -10000, n
+                else:
+                    return -10000
+            else: # if white played the mate move
+                if return_mate_n:
+                    return 10000, n
+                else:
+                    return 10000
+
+    # handle error if score is none when mate in n
+    if board.turn == True:
+        score = info['score'].relative.score()
+    elif board.turn == False:
+        score = -info['score'].relative.score() # transform score to absolute score (pos in favor of white, neg in favor black)
+
+    if return_mate_n:
+        return score, None
+    else:
+        return score
+
+def evaluate_relative(board):
+    with chess.engine.SimpleEngine.popen_uci(stockfish_path) as engine:
+        info = engine.analyse(board, chess.engine.Limit(**STOCKFISH_CONFIG))
+
+    possible_mate_score = str(info['score'].relative)
+    if '#' in possible_mate_score:
+        if '+' in possible_mate_score:
+            return 10000
+        else:
+            return -10000
+
+    # handle error if score is none when mate in n
+    score = info['score'].relative.score()
+    return score
+
+
+def has_mate_in_n(board):
+    with chess.engine.SimpleEngine.popen_uci(stockfish_path) as engine:
+        info = engine.analyse(board, chess.engine.Limit(**STOCKFISH_CONFIG))
 
         if '#' in str(info['score'].relative):
             return True
         else:
             return False
 
+def move_allows_mate(board: chess.Board, move, return_winning_player=False):
+    #move = board.parse_san(move)
+    position_after_move = board.copy()
+    position_after_move.push(move)
 
+    with chess.engine.SimpleEngine.popen_uci(stockfish_path) as engine:
+        info = engine.analyse(position_after_move, chess.engine.Limit(**STOCKFISH_CONFIG))
 
+    score = str(info['score'].relative)
 
-def calculate_points_gained_by_move(board: chess.Board, move, time_limit=0.3, **kwargs):
-    previous_score = evaluate(board, time_limit)
+    if return_winning_player:
+        if '#' not in score:
+            return None
+        else:
+            if '+' in score:
+                return not board.turn
+            elif '-' in score:
+                return board.turn
+
+    if '#' not in score:
+        return False
+    else:
+        return True
+
+def calculate_points_gained_by_move(board: chess.Board, move, **kwargs):
+    previous_score = evaluate(board)
 
     position_after_move = board.copy()
     position_after_move.push(move)
 
-    current_score, n = evaluate(position_after_move, time_limit, return_mate_n=True)
+    current_score, n = evaluate(position_after_move, return_mate_n=True)
     
-    #points_gained = calculate_points_gained(position_after_move, previous_score, time_limit)
+    #points_gained = calculate_points_gained(position_after_move, previous_score)
 
     #print(previous_score, current_score)
 
@@ -306,9 +398,9 @@ def calculate_points_gained_by_move(board: chess.Board, move, time_limit=0.3, **
 
     return points_gained
 
-def classify_move(board: chess.Board, move, time_limit=0.3):
+def classify_move(board: chess.Board, move):
 
-    points_gained = calculate_points_gained_by_move(board, move, time_limit)
+    points_gained = calculate_points_gained_by_move(board, move)
 
     if type(points_gained) == str:
         # quite redundant put im putting it for clarity
@@ -332,10 +424,7 @@ def classify_move(board: chess.Board, move, time_limit=0.3):
     else:
         return 'blunder'
 
-
-
-
-def rank_moves(board: chess.Board, time_limit=0.25, return_dict=False):
+def rank_moves(board: chess.Board, return_dict=False):
     # ascending order
     
     scores = []
@@ -346,7 +435,7 @@ def rank_moves(board: chess.Board, time_limit=0.25, return_dict=False):
         position_after_move = board.copy()
         position_after_move.push(move)
 
-        score = evaluate(position_after_move, time_limit)
+        score = evaluate(position_after_move)
         
         moves.append(move)
         scores.append(score)
@@ -358,6 +447,7 @@ def rank_moves(board: chess.Board, time_limit=0.25, return_dict=False):
         return {m: s for m, s in zip(moves, scores)}
     else:
         return moves
+
 
 def is_developing_move(board: chess.Board, move):
     #move = board.parse_san(move)
@@ -395,7 +485,7 @@ def is_fianchetto(board: chess.Board, move):
         
     return False
 
-def check_for_threats(board: chess.Board, time_limit=0.25, moves_ahead=2, take_turns=False, by_opponent=True):
+def check_for_threats(board: chess.Board, moves_ahead=2, take_turns=False, by_opponent=True):
 
     assert not board.is_check()
 
@@ -405,7 +495,7 @@ def check_for_threats(board: chess.Board, time_limit=0.25, moves_ahead=2, take_t
     
     if take_turns:
         with chess.engine.SimpleEngine.popen_uci(stockfish_path) as engine:
-            info = engine.analyse(board, chess.engine.Limit(time=time_limit))
+            info = engine.analyse(board, chess.engine.Limit(**STOCKFISH_CONFIG))
 
         threat_moves = info['pv'][:moves_ahead]
 
@@ -419,7 +509,7 @@ def check_for_threats(board: chess.Board, time_limit=0.25, moves_ahead=2, take_t
             else:
                 experiment_board.turn = not opponent_color
             with chess.engine.SimpleEngine.popen_uci(stockfish_path) as engine:
-                info = engine.analyse(experiment_board, chess.engine.Limit(time=time_limit))
+                info = engine.analyse(experiment_board, chess.engine.Limit(**STOCKFISH_CONFIG))
             
             best_move = info['pv'][0]
             threat_moves.append(best_move)
@@ -464,312 +554,6 @@ def is_possible_trade(board: chess.Board, move):
             
         
         return False
-        
-def is_possible_sacrifice(board: chess.Board, move):
-
-    if str(board.piece_at(move.from_square)).lower() == 'p':
-        return False
-
-    if board.is_capture(move):
-        defending_squares = is_defended(board, move.to_square, by_color=not board.turn, return_list_of_defenders=True)
-
-        if len(defending_squares) > 0:
-            
-            if board.piece_type_at(move.to_square) < board.piece_type_at(move.from_square):
-                
-                if (board.piece_type_at(move.to_square) != 2) or (board.piece_type_at(move.from_square) != 3):
-                    for defending_square in defending_squares:
-                        if board.piece_type_at(defending_square) < board.piece_type_at(move.from_square):
-                            return True
-                        else:
-                            return False
-                else:
-                    return False
-            else:
-                return False             
-        else:
-            return False
-        
-    else:
-        attackers = list(board.attackers(not board.turn, move.to_square))
-        if len(attackers) > 0:
-            for attacking_square in attackers:
-                if is_defended(board, move.to_square, by_color=board.turn):
-                    if board.piece_type_at(attacking_square) < board.piece_type_at(move.from_square):
-                        if (board.piece_type_at(attacking_square) != 2) or (board.piece_type_at(move.from_square) != 3):
-                            if not board.is_pinned(not board.turn, attacking_square):
-                                return True
-                else:
-                    return True
-        
-        return False
-    
-def move_pins_opponent(board: chess.Board, move, return_pinned_square=False):
-    #move = board.parse_san(move)
-
-    if board.is_attacked_by(not board.turn, move.to_square):
-        return False
-
-    position_after_move = board.copy()
-    position_after_move.push(move)
-    pinned_square = None
-
-    for square in chess.SQUARES: # check if there already is a pin
-        piece = board.piece_at(square)
-        if piece is not None:
-            if piece.color is not board.turn:
-                if board.is_pinned(not board.turn, square):
-                    return False
-
-    possible_pinned_squares = list(position_after_move.attacks(move.to_square))
-    for square in possible_pinned_squares:
-        if (position_after_move.piece_at(square) is not None) and (position_after_move.piece_at(square).color == position_after_move.turn):
-            if position_after_move.is_pinned(position_after_move.turn, square):
-                pinned_square = square
-                
-                break
-            else:
-                pinned_square = None
-
-    if return_pinned_square:
-        return pinned_square        
-
-    if pinned_square is not None:
-        return True
-    else:
-        return False
-    
-def board_has_pin(board: chess.Board, return_pin_moves=False):
-
-    pin_moves = []
-
-    for move in board.legal_moves:
-        if move_pins_opponent(board, move):
-            pin_moves.append(move)
-
-    if return_pin_moves:
-        return pin_moves
-    
-    if len(pin_moves) > 0:
-        return True
-    else:
-        return False
-
-def move_misses_pin(board: chess.Board, move, return_pin_move=False):
-    # doesn't exactly mean that player made a pin just because it's false
-    #move = board.parse_san(move)
-
-    pin_moves = board_has_pin(board, return_pin_moves=True)
-
-    if return_pin_move:
-        return pin_moves
-
-    if len(pin_moves) == 0:
-        return False
-    else:
-        if move in pin_moves:
-            return False
-        else:
-            return True
-
-def move_misses_mate(board: chess.Board, move, time_limit=0.1):
-    #move = board.parse_san(move)
-    
-    if has_mate_in_n(board, time_limit):
-        position_after_move = board.copy()
-        position_after_move.push(move)
-        if has_mate_in_n(position_after_move, time_limit):
-            return False
-        else:
-            return True
-
-def moves_rook_to_open_file(board: chess.Board, move):
-    # use best move to see if you missed an opportunity to put rook in open file
-    from_square_reqs = list(range(16)) + list(range(48, 64))
-    
-    #move = board.parse_san(move)
-    if str(board.piece_at(move.from_square)).lower() == 'r':
-        if move.from_square in from_square_reqs: # make sure that the rook is comming from 1, 2, 7, or 8th rank
-            if abs(move.from_square - move.to_square) < 8: # make sure that the rook move is horizontal
-                file_name = chess.square_name(move.to_square)[0]
-                num_pieces_on_file = 0
-                for i in range(1, 9):
-                    if board.piece_at(chess.parse_square(f'{file_name}{i}')) is not None:
-                        num_pieces_on_file += 1
-
-                if num_pieces_on_file < 3:
-                    return True
-    
-    return False
-
-def is_an_opening(game: str, return_name_and_desc=True):
-    opening = openings_df[openings_df['Moves'] == game]
-    
-    if return_name_and_desc:
-        if opening.empty:
-                return None, None
-        else:
-            return (opening['Name'].iloc[0], opening['Description'].iloc[0])
-    else:
-        if opening.empty:
-            return False
-        else:
-            return True
-
-def is_endgame(board: chess.Board):
-    major_pieces = 0
-    fen = board.fen()
-    for p in fen.split(' ')[0]:
-        if p.lower() in ['r', 'b', 'n', 'q']:
-            
-            major_pieces += 1
-
-    if major_pieces < 6:
-        return True
-    else:
-        return False
-    
-def move_moves_king_off_backrank(board: chess.Board, move):
-    #move = board.parse_san(move)
-
-    backrank_squares = list(range(0, 8)) + list(range(56, 64))
-    if is_endgame(board):
-        if str(board.piece_at(move.from_square)).lower() == 'k':
-            if move.from_square in backrank_squares:
-                if move.to_square not in backrank_squares:
-                    return True
-        
-    return False
-
-def move_attacks_piece(board: chess.Board, move: chess.Move, return_attacked_piece=False):
-
-    position_after_move = board.copy()
-    position_after_move.push(move)
-    
-    if is_defended(position_after_move, move.to_square) or not board.is_attacked_by(position_after_move.turn, move.to_square):
-        attacked_squares = list(position_after_move.attacks(move.to_square))
-        for attacked_square in attacked_squares:
-            if position_after_move.piece_at(attacked_square) is not None:
-                if str(position_after_move.piece_at(attacked_square)).lower() != 'k':
-                    if position_after_move.piece_at(attacked_square).color != position_after_move.piece_at(move.to_square).color:
-                        if position_after_move.piece_type_at(attacked_square) > position_after_move.piece_type_at(move.to_square):
-                            
-                            if return_attacked_piece:
-                                return position_after_move.piece_at(attacked_square)
-                            return True
-                        elif is_hanging(position_after_move, attacked_square, capturable_by=not position_after_move.turn):
-                            if return_attacked_piece:
-                                return position_after_move.piece_at(attacked_square)
-                            return True
-    
-    return False
-
-def move_wins_tempo(board: chess.Board, move):
-    #move = board.parse_san(move)
-
-    if not move_attacks_piece(board, move):
-        return False
-
-    #position_after_move = board.copy()
-    #position_after_move.push(move)
-
-    #attacking_piece = position_after_move.piece_at(move.to_square)
-
-    points_gained = calculate_points_gained_by_move(board, move, time_limit=0.2)
-
-    if points_gained > 0:
-        return True
-    
-    return False
-
-    '''
-    for attacked_square in position_after_move.attacks(move.to_square):
-        if position_after_move.piece_at(attacked_square) is not None:
-            if position_after_move.piece_at(attacked_square).color != attacking_piece.color:
-                
-                if not is_defended(position_after_move, attacked_square):
-                    return True
-                elif is_defended(position_after_move, attacked_square):
-                    if position_after_move.piece_type_at(attacked_square) > position_after_move.piece_type_at(move.to_square):
-                        return True
-                elif str(position_after_move.piece_at(attacked_square)).lower() == 'q':
-                    return True
-    
-    return False
-    '''
-
-def move_captures_free_piece(board: chess.Board, move):
-    if board.is_capture(move):
-        if is_hanging(board, move.to_square, capturable_by=board.turn):
-            return True
-        
-    return False
-
-def move_misses_free_piece(board: chess.Board, move, return_free_captures=False):
-
-    free_captures = []
-
-    for legal_move in board.legal_moves:
-        if move_captures_free_piece(board, legal_move):
-            free_captures.append(legal_move)
-
-    if return_free_captures:
-        return free_captures
-    
-    if len(free_captures) == 0:
-        return False
-    else:
-        if move in free_captures:
-            return False
-        else:
-            return True
-
-def move_threatens_mate(board: chess.Board, move, time_limit=0.1):
-
-    experiment_board = board.copy()
-    experiment_board.push(move)
-
-    if experiment_board.is_check():
-        return False
-
-    experiment_board.push(chess.Move.null())
-
-    with chess.engine.SimpleEngine.popen_uci(stockfish_path) as engine:
-        info = engine.analyse(experiment_board, chess.engine.Limit(time=time_limit))
-
-    score = str(info['score'].relative)
-
-    if ('#' in score) and ('+' in score):
-        return True
-    else:
-        return False
-
-def is_capturable_by_lower_piece(board: chess.Board, square, capturable_by):
-
-    attacker_squares = board.attackers(capturable_by, square)
-
-    for attacker_square in attacker_squares:
-        if board.piece_type_at(attacker_square) < board.piece_type_at(square):
-            return True
-
-def move_captures_higher_piece(board: chess.Board, move):
-
-    if board.is_capture(move):
-        if board.piece_type_at(move.from_square) < board.piece_type_at(move.to_square):
-            return True
-        
-    return False
-
-def check_for_capturable_pieces_by_lower(board: chess.Board):
-
-    capturable_squares = []
-
-    for square in board.piece_map():
-        if board.piece_at(square).color != board.turn:
-            if is_capturable_by_lower_piece(board, square, capturable_by=board.turn):
-                capturable_squares.append(square)
-
-    return capturable_squares
 
 def move_is_discovered_check(board: chess.Board, move):
     position_after_move = board.copy()
@@ -808,7 +592,7 @@ def move_is_discovered_check_and_attacks(board: chess.Board, move, return_attack
         return True
     else:
         return False
-    
+
 def is_trapped(board: chess.Board, square, by):
 
     if str(board.piece_at(square)).lower() == 'k':
@@ -892,7 +676,7 @@ def is_trapped(board: chess.Board, square, by):
         return True
     else:
         return False
-    
+
 def move_traps_opponents_piece(board: chess.Board, move, return_trapped_squares=False):
     position_after_move = board.copy()
     position_after_move.push(move)
@@ -913,52 +697,229 @@ def move_traps_opponents_piece(board: chess.Board, move, return_trapped_squares=
     else:
         return False
 
+def is_possible_sacrifice(board: chess.Board, move):
 
+    if str(board.piece_at(move.from_square)).lower() == 'p':
+        return False
 
+    if board.is_capture(move):
+        defending_squares = is_defended(board, move.to_square, by_color=not board.turn, return_list_of_defenders=True)
 
-
-
-
-def mate_in_n_for(board, time_limit=0.2):
-    with chess.engine.SimpleEngine.popen_uci(stockfish_path) as engine:
-        info = engine.analyse(board, chess.engine.Limit(time=time_limit))
-    score = str(info['score'].relative)
-
-    assert '#' in score
-
-    n = int(''.join([i for i in score if i in ['1', '2', '3', '4', '5', '6', '7', '8', '9']]))
-
-    if '-' in score:
-        losing_side = 'Black' if (board.turn == False) else 'White'
-        return f'{losing_side} gets checkmated in {n}. '
-    elif '+' in score:
-        losing_side = 'Black' if (board.turn == True) else 'White'
-        return f'{losing_side} gets checkmated in {n}. '
-
-def convert_movelist_to_pgn(moves: list):
-    pgn = ""
-    move_number = 1
-
-    for move in moves:
-        if move_number % 2 == 1:
-            pgn += f"{move_number // 2 + 1}.{move} "
+        if len(defending_squares) > 0:
+            
+            if board.piece_type_at(move.to_square) < board.piece_type_at(move.from_square):
+                
+                if (board.piece_type_at(move.to_square) != 2) or (board.piece_type_at(move.from_square) != 3):
+                    for defending_square in defending_squares:
+                        if board.piece_type_at(defending_square) < board.piece_type_at(move.from_square):
+                            return True
+                        else:
+                            return False
+                else:
+                    return False
+            else:
+                return False             
         else:
-            pgn += f"{move} "
-
-        move_number += 1
-
-    return pgn.strip()
-
-def search_opening(dataframe, pgn):
-
-    # Check if the search_string is in column 'A'
-    mask = dataframe['pgn'] == pgn
-
-    # If there is a match, return the corresponding value in column 'B'
-    if any(mask):
-        return dataframe.loc[mask, 'name'].iloc[0]
+            return False
+        
     else:
-        return None
+        attackers = list(board.attackers(not board.turn, move.to_square))
+        if len(attackers) > 0:
+            for attacking_square in attackers:
+                if is_defended(board, move.to_square, by_color=board.turn):
+                    if board.piece_type_at(attacking_square) < board.piece_type_at(move.from_square):
+                        if (board.piece_type_at(attacking_square) != 2) or (board.piece_type_at(move.from_square) != 3):
+                            if not board.is_pinned(not board.turn, attacking_square):
+                                return True
+                else:
+                    return True
+        
+        return False
+
+def move_pins_opponent(board: chess.Board, move, return_pinned_square=False):
+    #move = board.parse_san(move)
+
+    if board.is_attacked_by(not board.turn, move.to_square):
+        if (not is_defended(board, move.to_square, by_color=board.turn)):
+            return False
+
+    position_after_move = board.copy()
+    position_after_move.push(move)
+    pinned_square = None
+
+    '''
+    for square in chess.SQUARES: # check if there already is a pin
+        piece = board.piece_at(square)
+        if piece is not None:
+            if piece.color is not board.turn:
+                if board.is_pinned(not board.turn, square):
+                    return False
+    '''
+
+    possible_pinned_squares = list(position_after_move.attacks(move.to_square))
+    for square in possible_pinned_squares:
+        if (position_after_move.piece_at(square) is not None) and (position_after_move.piece_at(square).color == position_after_move.turn):
+            if position_after_move.is_pinned(position_after_move.turn, square):
+                pinned_square = square
+                
+                break
+            else:
+                pinned_square = None
+
+    if return_pinned_square:
+        return pinned_square        
+
+    if pinned_square is not None:
+        return True
+    else:
+        return False
+
+def board_has_pin(board: chess.Board, return_pin_moves=False):
+
+    pin_moves = []
+
+    for move in board.legal_moves:
+        if move_pins_opponent(board, move):
+            pin_moves.append(move)
+
+    if return_pin_moves:
+        return pin_moves
+    
+    if len(pin_moves) > 0:
+        return True
+    else:
+        return False
+
+def move_misses_pin(board: chess.Board, move, return_pin_move=False):
+    # doesn't exactly mean that player made a pin just because it's false
+    #move = board.parse_san(move)
+
+    pin_moves = board_has_pin(board, return_pin_moves=True)
+
+    if return_pin_move:
+        return pin_moves
+
+    if len(pin_moves) == 0:
+        return False
+    else:
+        if move in pin_moves:
+            return False
+        else:
+            return True
+
+def move_misses_mate(board: chess.Board, move):
+    #move = board.parse_san(move)
+    
+    if has_mate_in_n(board):
+        position_after_move = board.copy()
+        position_after_move.push(move)
+        if has_mate_in_n(position_after_move):
+            return False
+        else:
+            return True
+
+def moves_rook_to_open_file(board: chess.Board, move):
+    # use best move to see if you missed an opportunity to put rook in open file
+    from_square_reqs = list(range(16)) + list(range(48, 64))
+    
+    #move = board.parse_san(move)
+    if str(board.piece_at(move.from_square)).lower() == 'r':
+        if move.from_square in from_square_reqs: # make sure that the rook is comming from 1, 2, 7, or 8th rank
+            if abs(move.from_square - move.to_square) < 8: # make sure that the rook move is horizontal
+                file_name = chess.square_name(move.to_square)[0]
+                num_pieces_on_file = 0
+                for i in range(1, 9):
+                    if board.piece_at(chess.parse_square(f'{file_name}{i}')) is not None:
+                        num_pieces_on_file += 1
+
+                if num_pieces_on_file < 3:
+                    return True
+    
+    return False
+
+def is_an_opening(game: str, return_name_and_desc=True):
+    opening = openings_df[openings_df['Moves'] == game]
+    
+    if return_name_and_desc:
+        if opening.empty:
+                return None, None
+        else:
+            return (opening['Name'].iloc[0], opening['Description'].iloc[0])
+    else:
+        if opening.empty:
+            return False
+        else:
+            return True
+
+
+def is_endgame(board: chess.Board):
+    major_pieces = 0
+    fen = board.fen()
+    for p in fen.split(' ')[0]:
+        if p.lower() in ['r', 'b', 'n', 'q']:
+            
+            major_pieces += 1
+
+    if major_pieces < 6:
+        return True
+    else:
+        return False
+
+def move_moves_king_off_backrank(board: chess.Board, move):
+    #move = board.parse_san(move)
+
+    backrank_squares = list(range(0, 8)) + list(range(56, 64))
+    if is_endgame(board):
+        if str(board.piece_at(move.from_square)).lower() == 'k':
+            if move.from_square in backrank_squares:
+                if move.to_square not in backrank_squares:
+                    return True
+        
+    return False
+
+def move_attacks_piece(board: chess.Board, move: chess.Move, return_attacked_piece=False):
+
+    position_after_move = board.copy()
+    position_after_move.push(move)
+    
+    if is_defended(position_after_move, move.to_square) or not board.is_attacked_by(position_after_move.turn, move.to_square):
+        attacked_squares = list(position_after_move.attacks(move.to_square))
+        for attacked_square in attacked_squares:
+            if position_after_move.piece_at(attacked_square) is not None:
+                if str(position_after_move.piece_at(attacked_square)).lower() != 'k':
+                    if position_after_move.piece_at(attacked_square).color != position_after_move.piece_at(move.to_square).color:
+                        if position_after_move.piece_type_at(attacked_square) > position_after_move.piece_type_at(move.to_square):
+                            
+                            if return_attacked_piece:
+                                return position_after_move.piece_at(attacked_square)
+                            return True
+                        elif is_hanging(position_after_move, attacked_square, capturable_by=not position_after_move.turn):
+                            if return_attacked_piece:
+                                return position_after_move.piece_at(attacked_square)
+                            return True
+    
+    return False
+
+def move_wins_tempo(board: chess.Board, move):
+    #move = board.parse_san(move)
+
+    if not move_attacks_piece(board, move):
+        return False
+
+    #position_after_move = board.copy()
+    #position_after_move.push(move)
+
+    #attacking_piece = position_after_move.piece_at(move.to_square)
+
+    points_gained = calculate_points_gained_by_move(board, move)
+
+    if type(points_gained) == str:
+        return False
+
+    if points_gained > 0:
+        return True
+    
+    return False
 
 def parse_pgn(pgn, san_only=False):
     pgn = io.StringIO(pgn)
@@ -987,72 +948,144 @@ def parse_pgn(pgn, san_only=False):
     
         return uci_moves, san_moves, fens
 
-def evaluate(board, time_limit=0.25, return_mate_n=False):
-    with chess.engine.SimpleEngine.popen_uci(stockfish_path) as engine:
-        info = engine.analyse(board, chess.engine.Limit(time=time_limit))
+def convert_movelist_to_pgn(moves: list):
+    pgn = ""
+    move_number = 1
 
-    possible_mate_score = str(info['score'].relative)
-    if '#' in possible_mate_score:
-
-        n = abs(int(possible_mate_score.replace("#", '')))
-
-        if '+' in possible_mate_score:
-            if board.turn == True: # if black played the mate move
-                if return_mate_n:
-                    return 10000, n
-                else:
-                    return 10000
-            else: # if white played the mate move
-                if return_mate_n:
-                    return -10000, n
-                else:
-                    return -10000
+    for move in moves:
+        if move_number % 2 == 1:
+            pgn += f"{move_number // 2 + 1}.{move} "
         else:
-            if board.turn == True: # if black played the mate move
-                if return_mate_n:
-                    return -10000, n
-                else:
-                    return -10000
-            else: # if white played the mate move
-                if return_mate_n:
-                    return 10000, n
-                else:
-                    return 10000
+            pgn += f"{move} "
 
-    # handle error if score is none when mate in n
-    if board.turn == True:
-        score = info['score'].relative.score()
-    elif board.turn == False:
-        score = -info['score'].relative.score() # transform score to absolute score (pos in favor of white, neg in favor black)
+        move_number += 1
 
-    if return_mate_n:
-        return score, None
+    return pgn.strip()
+
+def move_captures_free_piece(board: chess.Board, move):
+    if board.is_capture(move):
+        if is_hanging(board, move.to_square, capturable_by=board.turn):
+            return True
+        
+    return False
+
+def move_misses_free_piece(board: chess.Board, move, return_free_captures=False):
+
+    free_captures = []
+
+    for legal_move in board.legal_moves:
+        if move_captures_free_piece(board, legal_move):
+            free_captures.append(legal_move)
+
+    if return_free_captures:
+        return free_captures
+    
+    if len(free_captures) == 0:
+        return False
     else:
-        return score
-
-def evaluate_relative(board, time_limit=0.25):
-    with chess.engine.SimpleEngine.popen_uci(stockfish_path) as engine:
-        info = engine.analyse(board, chess.engine.Limit(time=time_limit))
-
-    possible_mate_score = str(info['score'].relative)
-    if '#' in possible_mate_score:
-        if '+' in possible_mate_score:
-            return 10000
+        if move in free_captures:
+            return False
         else:
-            return -10000
+            return True
 
-    # handle error if score is none when mate in n
-    score = info['score'].relative.score()
-    return score
+def move_threatens_mate(board: chess.Board, move):
 
-def get_best_move(board: chess.Board, time_limit=0.2):
+    experiment_board = board.copy()
+    experiment_board.push(move)
+
+    if experiment_board.is_check():
+        return False
+
+    experiment_board.push(chess.Move.null())
+
     with chess.engine.SimpleEngine.popen_uci(stockfish_path) as engine:
-        info = engine.analyse(board, chess.engine.Limit(time=time_limit))
+        info = engine.analyse(experiment_board, chess.engine.Limit(**STOCKFISH_CONFIG))
+
+    score = str(info['score'].relative)
+
+    if ('#' in score) and ('+' in score):
+        return True
+    else:
+        return False
+
+def is_capturable_by_lower_piece(board: chess.Board, square, capturable_by):
+
+    attacker_squares = board.attackers(capturable_by, square)
+
+    for attacker_square in attacker_squares:
+        if board.piece_type_at(attacker_square) < board.piece_type_at(square):
+            return True
+
+def move_captures_higher_piece(board: chess.Board, move):
+
+    if board.is_capture(move):
+        if board.piece_type_at(move.from_square) < board.piece_type_at(move.to_square):
+            return True
+        
+    return False
+
+def check_for_capturable_pieces_by_lower(board: chess.Board):
+
+    capturable_squares = []
+
+    for square in board.piece_map():
+        if board.piece_at(square).color != board.turn:
+            if is_capturable_by_lower_piece(board, square, capturable_by=board.turn):
+                capturable_squares.append(square)
+
+    return capturable_squares
+
+def get_best_move(board: chess.Board):
+    with chess.engine.SimpleEngine.popen_uci(stockfish_path) as engine:
+        info = engine.analyse(board, chess.engine.Limit(**STOCKFISH_CONFIG))
 
     best_move = info['pv'][0]
     return best_move
 
-def compute_cpl(moves: list, time_limit):
+def get_best_sequence(board: chess.Board):
+    with chess.engine.SimpleEngine.popen_uci(stockfish_path) as engine:
+        info = engine.analyse(board, chess.engine.Limit(**STOCKFISH_CONFIG))
+
+    best_move = info['pv']
+    return best_move
+
+def get_lost_pieces(board: chess.Board):
+
+    default_pieces_white = ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'Q', 'K', 'N', 'B', 'R']
+    counter_default_white = Counter(default_pieces_white)
+    default_pieces_black = [p.upper() for p in default_pieces_white]
+    counter_default_black = Counter(default_pieces_black)
+
+    pieces = [str(p) for p in list(board.piece_map().values)]
+
+    white_piece_list = [p for p in pieces if p.isupper()]
+    black_piece_list = [p for p in pieces if p.islower()]
+
+    counter_white = Counter(white_piece_list)
+    counter_black = Counter(black_piece_list)
+
+    lost_white_pieces = list((counter_default_white - counter_white).elements())
+    lost_black_pieces = list((counter_default_black - counter_black).elements())
+
+def mate_in_n_for(board):
+    with chess.engine.SimpleEngine.popen_uci(stockfish_path) as engine:
+        info = engine.analyse(board, chess.engine.Limit(**STOCKFISH_CONFIG))
+    score = str(info['score'].relative)
+
+    print(score)
+
+    assert '#' in score
+
+    n = int(''.join([i for i in score if i in ['1', '2', '3', '4', '5', '6', '7', '8', '9']]))
+
+    if '-' in score:
+        losing_side = 'Black' if (board.turn == False) else 'White'
+        return f'{losing_side} gets checkmated in {n}. '
+    elif '+' in score:
+        losing_side = 'Black' if (board.turn == True) else 'White'
+        return f'{losing_side} gets checkmated in {n}. '
+
+def compute_cpl(moves: list):
     cpls_white = []
     cpls_black = []
     scores = []
@@ -1062,7 +1095,7 @@ def compute_cpl(moves: list, time_limit):
     for e, move in (enumerate(tqdm(moves))):
 
         comp_board = board.copy()
-        best_move = get_best_move(comp_board, time_limit)
+        best_move = get_best_move(comp_board)
         comp_board.push(best_move)
         score_best = evaluate(comp_board)
         if score_best == 10000:
@@ -1071,7 +1104,7 @@ def compute_cpl(moves: list, time_limit):
             score_best = -1000
 
         board.push(move)
-        score_player = evaluate(board, time_limit)
+        score_player = evaluate(board)
         if score_player == 10000:
             score_player = 1000
         elif score_player == -10000:
@@ -1090,7 +1123,16 @@ def compute_cpl(moves: list, time_limit):
 
     return scores, cpls_white, cpls_black, average_cpl_white, average_cpl_black
 
+def estimate_elo(acpl, n_moves):
+    if acpl > 500:
+        return 100
+    
+    e = 2.71828
+    estimate = 3000 * (e ** (-0.01*acpl)) * ((n_moves/50)**0.5)
+    return math.ceil(estimate / 100) * 100
+
 def calculate_accuracy(eval_scores):
+
     eval_scores = [0] + eval_scores
     def calculate_win_percentage(cp_eval, color):
         if color == 'w':
@@ -1123,48 +1165,18 @@ def calculate_accuracy(eval_scores):
 
     return np.mean(white_accuracies), np.mean(black_accuracies)
 
-def estimate_elo(acpl, n_moves):
-    if acpl > 500:
-        return 100
-    
-    e = 2.71828
-    estimate = 3100 * (e ** (-0.01*acpl)) * ((n_moves/40)**0.5)
-    return math.ceil(estimate / 100) * 100
-
-def get_tension(board):
-    player_tension = sum(1 for move in board.legal_moves if board.is_capture(move))
-    board.push(chess.Move.null())  # Make a null move to switch turns
-    opponent_tension = sum(1 for move in board.legal_moves if board.is_capture(move))
-    board.pop()  # Undo the null move
-
-    if board.turn == True:
-        return player_tension, opponent_tension
-    else:
-        return opponent_tension, player_tension
-
-def get_mobility(board):
-    player_mobility = sum(1 for move in board.legal_moves if str(board.piece_at(move.from_square)).lower() != 'p')
-    board.push(chess.Move.null())  # Make a null move to switch turns
-    opponent_mobility = sum(1 for move in board.legal_moves if str(board.piece_at(move.from_square)).lower() != 'p')
-    board.pop()  # Undo the null move
-
-    if board.turn == True:
-        return player_mobility, opponent_mobility  # white, black
-    else:
-        return opponent_mobility, player_mobility  # white, black
-
-def get_control(board: chess.Board):
-    white_control = 0
-    black_control = 0
+def calculate_material(board: chess.Board):
+    white_material = 0
+    black_material = 0
     for square in chess.SQUARES:
         piece = board.piece_at(square)
         if piece is not None:
             if piece.color == True:
-                white_control += len(board.attacks(square))
+                white_material += piece.piece_type
             else:
-                black_control += len(board.attacks(square))
+                black_material += piece.piece_type
 
-    return white_control, black_control
+    return white_material, black_material
 
 def get_development(board: chess.Board):
     white_dev = 0
@@ -1202,18 +1214,40 @@ def get_development(board: chess.Board):
 
     return white_dev, black_dev
 
-def calculate_material(board: chess.Board):
-    white_material = 0
-    black_material = 0
+def get_tension(board):
+    player_tension = sum(1 for move in board.legal_moves if board.is_capture(move))
+    board.push(chess.Move.null())  # Make a null move to switch turns
+    opponent_tension = sum(1 for move in board.legal_moves if board.is_capture(move))
+    board.pop()  # Undo the null move
+
+    if board.turn == True:
+        return player_tension, opponent_tension
+    else:
+        return opponent_tension, player_tension
+
+def get_mobility(board):
+    player_mobility = sum(1 for move in board.legal_moves if str(board.piece_at(move.from_square)).lower() != 'p')
+    board.push(chess.Move.null())  # Make a null move to switch turns
+    opponent_mobility = sum(1 for move in board.legal_moves if str(board.piece_at(move.from_square)).lower() != 'p')
+    board.pop()  # Undo the null move
+
+    if board.turn == True:
+        return player_mobility, opponent_mobility  # white, black
+    else:
+        return opponent_mobility, player_mobility  # white, black
+
+def get_control(board: chess.Board):
+    white_control = 0
+    black_control = 0
     for square in chess.SQUARES:
         piece = board.piece_at(square)
         if piece is not None:
             if piece.color == True:
-                white_material += piece.piece_type
+                white_control += len(board.attacks(square))
             else:
-                black_material += piece.piece_type
+                black_control += len(board.attacks(square))
 
-    return white_material, black_material
+    return white_control, black_control
 
 def calculate_metrics(fens):
 
@@ -1231,6 +1265,15 @@ def calculate_metrics(fens):
 
     return devs, mobs, tens, conts
 
+piece_dict = {
+    'k': 'King',
+    'n': 'Knight',
+    'q': 'Queen',
+    'r': 'Rook',
+    'p': 'Pawn',
+    'b': 'Bishop'
+}
+
 def review_move(board: chess.Board, move, previous_review: str, check_if_opening=False):
     def format_item_list(items):
         if len(items) == 0:
@@ -1247,7 +1290,7 @@ def review_move(board: chess.Board, move, previous_review: str, check_if_opening
     
     review = ''
 
-    best_move = get_best_move(board, 0.2)
+    best_move = get_best_move(board)
 
     if check_if_opening:
         opening = search_opening(openings_df, get_board_pgn(position_after_move))
@@ -1255,7 +1298,7 @@ def review_move(board: chess.Board, move, previous_review: str, check_if_opening
             review = f'This is a book move. The opening is called {opening}. '
             return 'book', review, best_move, board.san(best_move)
     
-    move_classication = classify_move(board, move, time_limit=0.2)
+    move_classication = classify_move(board, move)
 
     if move_classication in ['excellent', 'good']:
 
@@ -1373,13 +1416,13 @@ def review_move(board: chess.Board, move, previous_review: str, check_if_opening
         capturable_pieces_by_lower = check_for_capturable_pieces_by_lower(position_after_move)
         capturable_pieces_by_lower = [s for s in capturable_pieces_by_lower if s not in possible_hanging_squares]
 
-        if (len(capturable_pieces_by_lower) > 0) and (not position_after_move.is_check()):
+        if (len(capturable_pieces_by_lower) > 0) and (not position_after_move.is_check())  and (not is_possible_trade(board, move)):
             capturable_pieces_by_lower = [piece_dict[str(position_after_move.piece_at(s)).lower()] for s in capturable_pieces_by_lower]
             review += f'A {format_item_list(capturable_pieces_by_lower)} can be captured by a lower value piece. '
 
         possible_forking_moves = move_allows_fork(board, move, return_forking_moves=True)
         
-        if get_best_move(position_after_move, 0.2) in possible_forking_moves:
+        if get_best_move(position_after_move) in possible_forking_moves:
             review += 'This move leaves pieces vulnerable to a fork. '
 
         missed_forks = move_misses_fork(board, move, return_forking_moves=True)
@@ -1395,7 +1438,7 @@ def review_move(board: chess.Board, move, previous_review: str, check_if_opening
             if (best_move in missed_free_captures) and (move != best_move):
                 review += f"An opportunity to take a {piece_dict[str(board.piece_at(best_move.to_square)).lower()]} was lost. "
 
-        lets_opponent_play_move = get_best_move(position_after_move, 0.2)
+        lets_opponent_play_move = get_best_move(position_after_move)
 
         if move_threatens_mate(board, best_move):
             review += 'This misses an opportunity to create a checkmate threat. '
@@ -1446,7 +1489,7 @@ def review_move(board: chess.Board, move, previous_review: str, check_if_opening
             move_classication = 'good'
 
     elif 'gets mated' in move_classication:
-        lets_opponent_play_move = get_best_move(position_after_move, 0.2)
+        lets_opponent_play_move = get_best_move(position_after_move)
 
         losing_side = 'White' if board.turn else 'Black'
         review += f'The opponent can play {position_after_move.san(lets_opponent_play_move)}. '
@@ -1455,7 +1498,7 @@ def review_move(board: chess.Board, move, previous_review: str, check_if_opening
         move_classication = 'blunder'
     
     elif 'lost mate' in move_classication:
-        lets_opponent_play_move = get_best_move(position_after_move, 0.2)
+        lets_opponent_play_move = get_best_move(position_after_move)
         review += f"This loses the checkmate sequence. The opponent can play {position_after_move.san(lets_opponent_play_move)}. "
         move_classication = 'blunder'
 
@@ -1481,7 +1524,6 @@ def review_move(board: chess.Board, move, previous_review: str, check_if_opening
 
     return move_classication, review, best_move, board.san(best_move)
 
-
 def roast_move(board: chess.Board, move, previous_review: str, check_if_opening=False):
     def format_item_list(items):
         if len(items) == 0:
@@ -1498,7 +1540,7 @@ def roast_move(board: chess.Board, move, previous_review: str, check_if_opening=
     
     review = ''
 
-    best_move = get_best_move(board, 0.2)
+    best_move = get_best_move(board)
 
     if check_if_opening:
         opening = search_opening(openings_df, get_board_pgn(position_after_move))
@@ -1506,7 +1548,7 @@ def roast_move(board: chess.Board, move, previous_review: str, check_if_opening=
             review = f'This is a book move. The opening is called {opening}. '
             return 'book', review, best_move, board.san(best_move)
     
-    move_classication = classify_move(board, move, time_limit=0.2)
+    move_classication = classify_move(board, move)
 
     if move_classication in ['excellent', 'good']:
 
@@ -1624,13 +1666,13 @@ def roast_move(board: chess.Board, move, previous_review: str, check_if_opening=
         capturable_pieces_by_lower = check_for_capturable_pieces_by_lower(position_after_move)
         capturable_pieces_by_lower = [s for s in capturable_pieces_by_lower if s not in possible_hanging_squares]
 
-        if (len(capturable_pieces_by_lower) > 0) and (not position_after_move.is_check()):
+        if (len(capturable_pieces_by_lower) > 0) and (not position_after_move.is_check()) and (not is_possible_trade(board, move)):
             capturable_pieces_by_lower = [piece_dict[str(position_after_move.piece_at(s)).lower()] for s in capturable_pieces_by_lower]
-            review += f'A lower value is piece just STARTING at {format_item_list(capturable_pieces_by_lower)}. How the fuck can you let that happen? '
+            review += f'A lower value is piece just STARING at {format_item_list(capturable_pieces_by_lower)}. How the fuck can you let that happen? '
 
         possible_forking_moves = move_allows_fork(board, move, return_forking_moves=True)
         
-        if get_best_move(position_after_move, 0.2) in possible_forking_moves:
+        if get_best_move(position_after_move) in possible_forking_moves:
             review += 'Forky forky forky YOU CAN GET FORKED YOU DUMBASS! '
 
         missed_forks = move_misses_fork(board, move, return_forking_moves=True)
@@ -1646,7 +1688,7 @@ def roast_move(board: chess.Board, move, previous_review: str, check_if_opening=
             if (best_move in missed_free_captures) and (move != best_move):
                 review += f"Can this get any more annoying? You could have taken a {piece_dict[str(board.piece_at(best_move.to_square)).lower()]}. "
 
-        lets_opponent_play_move = get_best_move(position_after_move, 0.2)
+        lets_opponent_play_move = get_best_move(position_after_move)
 
         if move_threatens_mate(board, best_move):
             review += "Is this person trying to lose? They could've threatened a fucking forced checkmate. "
@@ -1697,7 +1739,7 @@ def roast_move(board: chess.Board, move, previous_review: str, check_if_opening=
             move_classication = 'good'
 
     elif 'gets mated' in move_classication:
-        lets_opponent_play_move = get_best_move(position_after_move, 0.2)
+        lets_opponent_play_move = get_best_move(position_after_move)
 
         losing_side = 'White' if board.turn else 'Black'
         review += f'The opponent can play {position_after_move.san(lets_opponent_play_move)}. '
@@ -1706,7 +1748,7 @@ def roast_move(board: chess.Board, move, previous_review: str, check_if_opening=
         move_classication = 'blunder'
     
     elif 'lost mate' in move_classication:
-        lets_opponent_play_move = get_best_move(position_after_move, 0.2)
+        lets_opponent_play_move = get_best_move(position_after_move)
         review += f"You were winning! Why did you do that? I guess that's expected for a someone with a small brain to lose a checkmate sequence. The opponent can play {position_after_move.san(lets_opponent_play_move)}. "
         move_classication = 'blunder'
 
@@ -1729,8 +1771,9 @@ def roast_move(board: chess.Board, move, previous_review: str, check_if_opening=
             if move == best_move:
                 move_classication = "best"
 
-
+    
     return move_classication, review, best_move, board.san(best_move)
+
 
 def get_board_pgn(board: chess.Board):
     game = chess.pgn.Game()
@@ -1743,15 +1786,6 @@ def get_board_pgn(board: chess.Board):
     # Add game result.
 
     return str(game.mainline_moves())
-
-def seperate_squares_in_move_list(uci_moves: list):
-    seperated_squares = []
-
-    for move in uci_moves:
-        move = str(move)
-        seperated_squares.append([move[:2], move[2:]])
-
-    return seperated_squares
 
 def review_game(uci_moves, roast=False, verbose=False):
 
@@ -1805,15 +1839,13 @@ def review_game(uci_moves, roast=False, verbose=False):
 
     return review_list, best_review_list, classification_list, uci_best_moves, san_best_moves
 
+def seperate_squares_in_move_list(uci_moves: list):
+    seperated_squares = []
 
+    for move in uci_moves:
+        move = str(move)
+        seperated_squares.append([move[:2], move[2:]])
 
-
-
-
-
-
-
-
-
+    return seperated_squares
 
 
