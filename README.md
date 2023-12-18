@@ -1,7 +1,9 @@
 # OpenChess: Insights (Beta)
 
-Updates:
+**Updates:**
 - Added adjustable stockfish search time and search depth
+
+<hr>
 
 An open-source chess analysis web app runnable in your local machine powered by Stockfish 16 NNUE. Includes:
 - move explanations in plain language similar to chess.com's game review
