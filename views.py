@@ -17,12 +17,21 @@ def analyse():
 
     if request.method == 'POST':
         pgn_data = request.form['pgn']
+        print(request.form)
+        time_limit = request.form['time-limit']
+        depth_limit = request.form['depth-limit']
+
+        if request.form['limits'] == "time":
+            chess_review.STOCKFISH_CONFIG = {'time': float(time_limit)}
+        else:
+            chess_review.STOCKFISH_CONFIG = {'depth': int(depth_limit)}
+
         if ('roastmode' in request.form):
             roast = True
 
     uci_moves, san_moves, fens = chess_review.parse_pgn(pgn_data)
 
-    scores, cpls_white, cpls_black, average_cpl_white, average_cpl_black = chess_review.compute_cpl(uci_moves, time_limit=0.05)
+    scores, cpls_white, cpls_black, average_cpl_white, average_cpl_black = chess_review.compute_cpl(uci_moves)
     n_moves = len(scores)//2
     white_elo_est, black_elo_est = chess_review.estimate_elo(average_cpl_white, n_moves), chess_review.estimate_elo(average_cpl_black, n_moves)
     white_acc, black_acc = chess_review.calculate_accuracy(scores)

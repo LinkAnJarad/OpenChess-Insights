@@ -1,11 +1,9 @@
 # OpenChess: Insights (Beta)
 
-Updates:
-- Roast mode feature for harsher reviews on inaccuracies, mistakes, and blunders!
+**Updates:**
+- Added adjustable stockfish search time and search depth
 
-- Improved ELO/rating estimation formula
-
-
+<hr>
 
 An open-source chess analysis web app runnable in your local machine powered by Stockfish 16 NNUE. Includes:
 - move explanations in plain language similar to chess.com's game review
@@ -24,7 +22,7 @@ https://github.com/LinkAnJarad/OpenChess-Insights/assets/79294502/ec2cb92f-52df-
 
 3. Install the packages in requirements.txt
 
-4. Run app.py through an IDE or a CLI. This will start the web app on your local machine at http://127.0.0.1:8000/views/.
+4. Run app.py through an IDE or a CLI. This will automatically start the web app on your local machine at http://127.0.0.1:8000/views/.
 
 5. Go to the url above and input a chess game's PGN. A 30-move game will take about 5 to 10 minutes to process. The output on the IDE or CLI will show some progress bars.
 
@@ -38,7 +36,7 @@ The code in this repository is quite cluttered, and contains a lot of bugs.
 - Enable customization of stockfish evaluation for faster analysis
 - Fix rating/ELO estimation (formula sometimes overestimates rating)
 - Improve layout
-- Remove redundant code
+- Remove redundant code for speedup
 
 ## Acknowledgements
 

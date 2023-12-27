@@ -17,6 +17,27 @@
                 <form action="/views/analysis" method="post">
                     <textarea name="pgn" rows="10" cols="50" required></textarea>
                     <br>
+
+
+                    <div class="limits-cont">
+
+                        <div class="time-cont">
+                            <label for="limits" id="time-label">Time per move:</label>
+                            <input type="radio" id="time-limit-radio" name="limits" checked="checked" value="time">
+                            <br>
+                            <input type="range" id="time-slider" name="time-limit" min="0.05" max="1.0" step="0.05" value="0.25" class="slider">
+                        </div>
+
+                        <div class="depth-cont">
+                            <label for="limits" id="depth-label">Depth:</label>
+                            <input type="radio" id="depth-limit-radio" name="limits" value="depth">
+                            <br>
+                            <input type="range" id="depth-slider" name="depth-limit" min="1" max="30" step="1" value="20" class="slider">
+
+                        </div>
+
+                    </div>
+                    <br>
                     <label for="roastmode">Roast mode: </label>
                     <input name="roastmode" type="checkbox">
                     <br>
@@ -28,12 +49,26 @@
 
     </div>
     
-    <footer>
-        
-    </footer>
-
-
-    
     
 </body>
+
+<script>
+    var timeSlider = document.getElementById("time-slider");
+    var depthSlider = document.getElementById("depth-slider");
+
+    var timeLabel = document.getElementById("time-label");
+    var depthLabel = document.getElementById("depth-label");
+
+    timeLabel.innerHTML = "Time per move: " + timeSlider.value;
+    depthLabel.innerHTML = "Depth per move: " + depthSlider.value;
+
+    timeSlider.oninput = function() {
+        timeLabel.innerHTML = "Time per move: " + timeSlider.value;
+    }
+    depthSlider.oninput = function() {
+        depthLabel.innerHTML = "Depth per move: " + depthSlider.value;
+    }
+
+</script>
+
 </html>
