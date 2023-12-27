@@ -32,6 +32,8 @@ https://github.com/LinkAnJarad/OpenChess-Insights/assets/79294502/ec2cb92f-52df-
 The code in this repository is quite cluttered, and contains a lot of bugs.
 
 ## To-do
+- ARROW KEYS FOR NAVIGATION BETWEEN MOVES
+- A PROCESSING PAGE WHEN IT IS ACTUALLY LOADING INSTEAD OF STARING AT SUBMIT
 - Make setup easier
 - Enable customization of stockfish evaluation for faster analysis
 - Fix rating/ELO estimation (formula sometimes overestimates rating)
