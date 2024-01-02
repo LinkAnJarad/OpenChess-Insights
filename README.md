@@ -22,7 +22,7 @@ https://github.com/LinkAnJarad/OpenChess-Insights/assets/79294502/ec2cb92f-52df-
 
 3. Install the packages in requirements.txt
 
-4. Run app.py through an IDE or a CLI. This will automatically start the web app on your local machine at http://127.0.0.1:8000/views/.
+4. Run the file run.bat to automatically start up the application on your web browser.
 
 5. Go to the url above and input a chess game's PGN. A 30-move game will take about 5 to 10 minutes to process. The output on the IDE or CLI will show some progress bars.
 
