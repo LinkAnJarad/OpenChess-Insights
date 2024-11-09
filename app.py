@@ -3,13 +3,26 @@ import webbrowser
 from flask import Flask
 from views import views
 import subprocess
+import argparse
 
 app = Flask(__name__)
 app.register_blueprint(views, url_prefix="/views")
 
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--debug", help="Enable Flask Debug", action="store_true")
+    return parser.parse_args()
+
 if __name__ == '__main__':
+    py_args = get_args()
     # Run the app in a separate process
-    process = subprocess.Popen(["python", "-m", "flask", "run", "--no-reload", "--port=8000"])
+    cli_args = ["python", "-m", "flask", "run", "--port=8000"]
+    if py_args.debug:
+        cli_args.append("--debug")
+    else:
+        cli_args.append("--no-reload")
+
+    process = subprocess.Popen(cli_args)
 
     # Wait in case of unexpected lag
     time.sleep(1)

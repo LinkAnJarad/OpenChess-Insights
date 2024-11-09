@@ -9,9 +9,11 @@ import math
 import numpy as np
 import io
 from tqdm import tqdm
+import platform
 
-stockfish_path = "stockfish.exe"
-
+stockfish_path = "stockfish"
+if "windows" in platform.system().lower():
+    stockfish_path += ".exe"
 
 STOCKFISH_CONFIG = {"time": 0.25}
 
