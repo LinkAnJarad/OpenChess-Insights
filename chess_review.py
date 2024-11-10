@@ -1852,7 +1852,14 @@ def seperate_squares_in_move_list(uci_moves: list):
     return seperated_squares
 
 @lru_cache(maxsize=128)
-def pgn_game_review(pgn_data: str, roast: bool):
+def pgn_game_review(pgn_data: str, roast: bool, limit_type: str, time_limit: float, depth_limit: int):
+    global STOCKFISH_CONFIG
+    
+    if limit_type == "time":
+        STOCKFISH_CONFIG = {'time': float(time_limit)}
+    else:
+        STOCKFISH_CONFIG = {'depth': int(depth_limit)}
+
     uci_moves, san_moves, fens = parse_pgn(pgn_data)
     scores, cpls_white, cpls_black, average_cpl_white, average_cpl_black = compute_cpl(uci_moves)
     n_moves = len(scores)//2

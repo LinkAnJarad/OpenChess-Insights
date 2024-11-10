@@ -14,6 +14,7 @@ def home():
 def analyse():
 
     roast = False
+    config = None
 
     if request.method == 'POST':
         pgn_data = request.form['pgn']
@@ -21,13 +22,12 @@ def analyse():
         time_limit = request.form['time-limit']
         depth_limit = request.form['depth-limit']
 
-        if request.form['limits'] == "time":
-            chess_review.STOCKFISH_CONFIG = {'time': float(time_limit)}
-        else:
-            chess_review.STOCKFISH_CONFIG = {'depth': int(depth_limit)}
-
-        if ('roastmode' in request.form):
-            roast = True
+        config = {
+            "limit_type": request.form['limits'],
+            "time_limit": time_limit,
+            "depth_limit": depth_limit,
+            "roast": 'roastmode' in request.form
+        }
 
     (
         san_moves, 
@@ -48,7 +48,7 @@ def analyse():
         black_elo_est,
         average_cpl_white,
         average_cpl_black
-     ) = chess_review.pgn_game_review(pgn_data=pgn_data, roast=roast)
+     ) = chess_review.pgn_game_review(pgn_data=pgn_data, **config)
 
     return render_template('analysis.html',
             move_list = san_moves,
