@@ -29,17 +29,26 @@ def analyse():
         if ('roastmode' in request.form):
             roast = True
 
-    uci_moves, san_moves, fens = chess_review.parse_pgn(pgn_data)
-
-    scores, cpls_white, cpls_black, average_cpl_white, average_cpl_black = chess_review.compute_cpl(uci_moves)
-    n_moves = len(scores)//2
-    white_elo_est, black_elo_est = chess_review.estimate_elo(average_cpl_white, n_moves), chess_review.estimate_elo(average_cpl_black, n_moves)
-    white_acc, black_acc = chess_review.calculate_accuracy(scores)
-    devs, mobs, tens, conts = chess_review.calculate_metrics(fens)
-
-    review_list, best_review_list, classification_list, uci_best_moves, san_best_moves = chess_review.review_game(uci_moves, roast)
-
-    uci_best_moves = chess_review.seperate_squares_in_move_list(uci_best_moves)
+    (
+        san_moves, 
+        fens, 
+        scores,
+        classification_list,
+        review_list,
+        best_review_list,
+        san_best_moves,
+        uci_best_moves,
+        devs,
+        tens,
+        mobs,
+        conts,
+        white_acc,
+        black_acc,
+        white_elo_est,
+        black_elo_est,
+        average_cpl_white,
+        average_cpl_black
+     ) = chess_review.pgn_game_review(pgn_data=pgn_data, roast=roast)
 
     return render_template('analysis.html',
             move_list = san_moves,

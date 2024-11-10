@@ -10,6 +10,7 @@ import numpy as np
 import io
 from tqdm import tqdm
 import platform
+from functools import lru_cache
 
 stockfish_path = "stockfish"
 if "windows" in platform.system().lower():
@@ -1850,4 +1851,36 @@ def seperate_squares_in_move_list(uci_moves: list):
 
     return seperated_squares
 
+@lru_cache(maxsize=128)
+def pgn_game_review(pgn_data: str, roast: bool):
+    uci_moves, san_moves, fens = parse_pgn(pgn_data)
+    scores, cpls_white, cpls_black, average_cpl_white, average_cpl_black = compute_cpl(uci_moves)
+    n_moves = len(scores)//2
+    white_elo_est, black_elo_est = estimate_elo(average_cpl_white, n_moves), estimate_elo(average_cpl_black, n_moves)
+    white_acc, black_acc = calculate_accuracy(scores)
+    devs, mobs, tens, conts = calculate_metrics(fens)
 
+    review_list, best_review_list, classification_list, uci_best_moves, san_best_moves = review_game(uci_moves, roast)
+
+    uci_best_moves = seperate_squares_in_move_list(uci_best_moves)
+
+    return (
+                san_moves, 
+                fens, 
+                scores,
+                classification_list,
+                review_list,
+                best_review_list,
+                san_best_moves,
+                uci_best_moves,
+                devs,
+                tens,
+                mobs,
+                conts,
+                white_acc,
+                black_acc,
+                white_elo_est,
+                black_elo_est,
+                average_cpl_white,
+                average_cpl_black
+            )
