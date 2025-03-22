@@ -255,6 +255,31 @@
         }
     }
 
+
+    var move_class_to_icon_class = {
+        "book": "bx bx-book-open",
+        "brilliant": "bx bx-brain",
+        "best": "bx bxs-badge-check",
+        "excellent": "bx bx-star",
+        "good": "bx bx-check-circle",
+        "inaccuracy": "bx bx-question-mark",
+        "mistake": "bx bx-x-circle",
+        "blunder": "bx bx-error-alt"
+    }
+
+    var move_class_to_class_color = {
+        "book": "saddlebrown",
+        "brilliant": "#2681ff",
+        "best": "#6cb400",
+        "excellent": "#6cb400",
+        "good": "#758358",
+        "inaccuracy": "#ffff00",
+        "mistake": "#ff9500",
+        "blunder": "#ff0000"
+    }
+
+    var display_classes = ["book", "brilliant", "inaccuracy", "mistake", "blunder"]
+
     document.getElementById('move-count-book-text').innerHTML = numBookMoves[0] + "  Book <i class='bx bx-book-open'></i>  " + numBookMoves[1];
 
     document.getElementById('move-count-brilliant-text').innerHTML = numBrilliantMoves[0] + "  Brilliant <i class='bx bx-brain' ></i>  " + numBrilliantMoves[1];
@@ -273,6 +298,8 @@
 
     for (const [i, move] of moves.entries()) {
 
+        var move_class = classifications[i]
+
         if ((i%2) == 0) {
 
             var movebarDiv = document.createElement('div');
@@ -290,6 +317,19 @@
             movewhiteDiv.setAttribute('data-fen', fens[i]);
             movebarDiv.appendChild(movewhiteDiv);
 
+            if(display_classes.includes(move_class)) {
+                var class_color = move_class_to_class_color[move_class];
+                var classIcon = document.createElement('i');
+                classIcon.className = move_class_to_icon_class[move_class];
+                
+                var classDiv = document.createElement('p');
+                classDiv.className = "move-class-icon-container";
+                classDiv.style = `font-size: 15px; color: ${class_color}`
+                classDiv.appendChild(classIcon);
+
+                movewhiteDiv.appendChild(classDiv);
+            } 
+
         } else {
 
             var moveblackDiv = document.createElement('div');
@@ -297,6 +337,19 @@
             moveblackDiv.innerHTML = move;
             moveblackDiv.setAttribute('data-fen', fens[i]);
             movebarDiv.appendChild(moveblackDiv);
+
+            if(display_classes.includes(move_class)) {
+                var class_color = move_class_to_class_color[move_class];
+                var classIcon = document.createElement('i');
+                classIcon.className = move_class_to_icon_class[move_class];
+                
+                var classDiv = document.createElement('p');
+                classDiv.className = "move-class-icon-container";
+                classDiv.style = `font-size: 15px; color: ${class_color}`
+                classDiv.appendChild(classIcon);
+
+                moveblackDiv.appendChild(classDiv);
+            }
 
         }
     }
@@ -499,7 +552,7 @@
             classificationText.style.color = '#6cb400'
             classificationText.innerHTML = moves[index] + " is " + cls;
         } else if (cls.includes("book")) {
-            classificationText.style.color = 'gray'
+            classificationText.style.color = 'saddlebrown'
             classificationText.innerHTML = moves[index] + " is a book move";
         } else if (cls.includes("forced")) {
             classificationText.style.color = 'gray'

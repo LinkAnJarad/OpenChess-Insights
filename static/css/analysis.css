@@ -251,7 +251,7 @@ p {
 
 #move-count-book-text {
     font-family: 'Microsoft JhengHei UI Light';
-    color: gray;
+    color: saddlebrown;
     font-size: 14px;
     padding: 5px;
     margin: 0px;
@@ -446,7 +446,7 @@ footer {
 }
 
 .move-container-clicked {
-    background-color: #ffffff;
+    background-color: #5c5c5c;
     width: 40%;
     padding: 5px;
     padding-left: 10px;
@@ -459,4 +459,16 @@ footer {
     padding-left: 16px;
     color: rgb(0, 0, 0, 0);
 }
+
+.move-class-icon-container {
+    position: relative;
+    top: -35px;
+    right: -55px;
+    width: 10px;
+    height: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+  }
 
